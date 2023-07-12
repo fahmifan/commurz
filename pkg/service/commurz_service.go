@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
+	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
 	"github.com/fahmifan/commurz/protogen/commurzpb/v1/commurzpbv1connect"
@@ -62,6 +65,93 @@ func (service *CommurzService) CreateProduct(
 	}
 
 	res = &connect.Response[commurzpbv1.Product]{
+		Msg: protoserde.FromProductPkg(product),
+	}
+
+	return res, nil
+}
+
+func (service *CommurzService) AddProductStock(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
+) (res *connect.Response[commurzpbv1.Product], err error) {
+	var product pkgproduct.Product
+
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+		productRepo := pkgproduct.ProductRepository{}
+
+		productID, err := pkgutil.ParseULID(req.Msg.GetProductId())
+		if err != nil {
+			return fmt.Errorf("[AddProductStock] ParseULID: %w", err)
+		}
+
+		product, err = productRepo.FindProductByID(ctx, tx, productID)
+		if err != nil {
+			return fmt.Errorf("[AddProductStock] FindProductByID: %w", err)
+		}
+
+		var stock pkgproduct.ProductStock
+		product, stock = product.AddStock(req.Msg.GetStockQty(), time.Now())
+
+		_, err = productRepo.SaveProductStock(ctx, tx, stock)
+		if err != nil {
+			return fmt.Errorf("[AddProductStock] SaveProductStock: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return res, fmt.Errorf("[AddProductStock] Transaction: %w", err)
+	}
+
+	res = &connect.Response[commurzpbv1.Product]{
+		Msg: protoserde.FromProductPkg(product),
+	}
+
+	return
+}
+
+func (service *CommurzService) ReduceProductStock(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
+) (*connect.Response[commurzpbv1.Product], error) {
+	productRepo := pkgproduct.ProductRepository{}
+
+	product := pkgproduct.Product{}
+	productID, err := pkgutil.ParseULID(req.Msg.ProductId)
+	if err != nil {
+		return nil, fmt.Errorf("[ReduceProductStock] ParseULID: %w", err)
+	}
+
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+		product, err = productRepo.FindProductByID(ctx, tx, productID)
+		if err != nil {
+			return fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
+		}
+
+		var stock pkgproduct.ProductStock
+		product, stock, err = product.ReduceStock(req.Msg.GetStockQty(), time.Now())
+		if err != nil {
+			return fmt.Errorf("[ReduceProductStock] ReduceStock: %w", err)
+		}
+
+		_, err = productRepo.SaveProductStock(ctx, tx, stock)
+		if err != nil {
+			return fmt.Errorf("[ReduceProductStock] SaveProductStock: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("[AddProductStock] Transaction: %w", err)
+	}
+
+	product, err = productRepo.FindProductByID(ctx, service.db, productID)
+	if err != nil {
+		return nil, fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
+	}
+
+	res := &connect.Response[commurzpbv1.Product]{
 		Msg: protoserde.FromProductPkg(product),
 	}
 

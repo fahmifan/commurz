@@ -39,12 +39,21 @@ const (
 	// CommurzServiceCreateProductProcedure is the fully-qualified name of the CommurzService's
 	// CreateProduct RPC.
 	CommurzServiceCreateProductProcedure = "/commurzpb.v1.CommurzService/CreateProduct"
+	// CommurzServiceAddProductStockProcedure is the fully-qualified name of the CommurzService's
+	// AddProductStock RPC.
+	CommurzServiceAddProductStockProcedure = "/commurzpb.v1.CommurzService/AddProductStock"
+	// CommurzServiceReduceProductStockProcedure is the fully-qualified name of the CommurzService's
+	// ReduceProductStock RPC.
+	CommurzServiceReduceProductStockProcedure = "/commurzpb.v1.CommurzService/ReduceProductStock"
 )
 
 // CommurzServiceClient is a client for the commurzpb.v1.CommurzService service.
 type CommurzServiceClient interface {
 	CreateUser(context.Context, *connect_go.Request[v1.CreateUserRequest]) (*connect_go.Response[v1.User], error)
+	// products
 	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
+	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
+	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 }
 
 // NewCommurzServiceClient constructs a client for the commurzpb.v1.CommurzService service. By
@@ -67,13 +76,25 @@ func NewCommurzServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+CommurzServiceCreateProductProcedure,
 			opts...,
 		),
+		addProductStock: connect_go.NewClient[v1.ChangeProductStockRequest, v1.Product](
+			httpClient,
+			baseURL+CommurzServiceAddProductStockProcedure,
+			opts...,
+		),
+		reduceProductStock: connect_go.NewClient[v1.ChangeProductStockRequest, v1.Product](
+			httpClient,
+			baseURL+CommurzServiceReduceProductStockProcedure,
+			opts...,
+		),
 	}
 }
 
 // commurzServiceClient implements CommurzServiceClient.
 type commurzServiceClient struct {
-	createUser    *connect_go.Client[v1.CreateUserRequest, v1.User]
-	createProduct *connect_go.Client[v1.CreateProductRequest, v1.Product]
+	createUser         *connect_go.Client[v1.CreateUserRequest, v1.User]
+	createProduct      *connect_go.Client[v1.CreateProductRequest, v1.Product]
+	addProductStock    *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
+	reduceProductStock *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
 }
 
 // CreateUser calls commurzpb.v1.CommurzService.CreateUser.
@@ -86,10 +107,23 @@ func (c *commurzServiceClient) CreateProduct(ctx context.Context, req *connect_g
 	return c.createProduct.CallUnary(ctx, req)
 }
 
+// AddProductStock calls commurzpb.v1.CommurzService.AddProductStock.
+func (c *commurzServiceClient) AddProductStock(ctx context.Context, req *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error) {
+	return c.addProductStock.CallUnary(ctx, req)
+}
+
+// ReduceProductStock calls commurzpb.v1.CommurzService.ReduceProductStock.
+func (c *commurzServiceClient) ReduceProductStock(ctx context.Context, req *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error) {
+	return c.reduceProductStock.CallUnary(ctx, req)
+}
+
 // CommurzServiceHandler is an implementation of the commurzpb.v1.CommurzService service.
 type CommurzServiceHandler interface {
 	CreateUser(context.Context, *connect_go.Request[v1.CreateUserRequest]) (*connect_go.Response[v1.User], error)
+	// products
 	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
+	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
+	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 }
 
 // NewCommurzServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -108,12 +142,26 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 		svc.CreateProduct,
 		opts...,
 	)
+	commurzServiceAddProductStockHandler := connect_go.NewUnaryHandler(
+		CommurzServiceAddProductStockProcedure,
+		svc.AddProductStock,
+		opts...,
+	)
+	commurzServiceReduceProductStockHandler := connect_go.NewUnaryHandler(
+		CommurzServiceReduceProductStockProcedure,
+		svc.ReduceProductStock,
+		opts...,
+	)
 	return "/commurzpb.v1.CommurzService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CommurzServiceCreateUserProcedure:
 			commurzServiceCreateUserHandler.ServeHTTP(w, r)
 		case CommurzServiceCreateProductProcedure:
 			commurzServiceCreateProductHandler.ServeHTTP(w, r)
+		case CommurzServiceAddProductStockProcedure:
+			commurzServiceAddProductStockHandler.ServeHTTP(w, r)
+		case CommurzServiceReduceProductStockProcedure:
+			commurzServiceReduceProductStockHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -129,4 +177,12 @@ func (UnimplementedCommurzServiceHandler) CreateUser(context.Context, *connect_g
 
 func (UnimplementedCommurzServiceHandler) CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.CreateProduct is not implemented"))
+}
+
+func (UnimplementedCommurzServiceHandler) AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.AddProductStock is not implemented"))
+}
+
+func (UnimplementedCommurzServiceHandler) ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.ReduceProductStock is not implemented"))
 }

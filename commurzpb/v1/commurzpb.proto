@@ -19,14 +19,6 @@ message Product {
   int64 current_stock = 4;
 }
 
-message ProductStock {
-  string id = 1;
-  string productId = 2;
-  int64 stock_in = 3;
-  int64 stock_out = 4;
-  google.protobuf.Timestamp created_at = 5;
-}
-
 // Requests definition
 message CreateUserRequest {
   string email = 1;
@@ -37,8 +29,17 @@ message CreateProductRequest {
   int64 price = 2;
 }
 
+message ChangeProductStockRequest {
+  string productId = 1;
+  int64 stock_qty = 2;
+}
 
+// Service definition
 service CommurzService {
   rpc CreateUser(CreateUserRequest) returns (User) {}
+
+  // products
   rpc CreateProduct(CreateProductRequest) returns (Product) {}
+  rpc AddProductStock(ChangeProductStockRequest) returns (Product) {}
+  rpc ReduceProductStock(ChangeProductStockRequest) returns (Product) {}
 }
