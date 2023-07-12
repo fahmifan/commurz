@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/preloads"
 	"github.com/fahmifan/ulids"
@@ -33,7 +34,7 @@ func (ProductRepository) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id 
 func (repo ProductRepository) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]Product, error) {
 	query := sqlcs.New(tx)
 
-	xproducts, err := query.FindAllProductsByIDs(ctx, stringULIDs(productIDs))
+	xproducts, err := query.FindAllProductsByIDs(ctx, pkgutil.StringULIDs(productIDs))
 	if err != nil {
 		return nil, fmt.Errorf("[FindProductsByIDs] FindAllProductsByIDs: %w", err)
 	}
@@ -57,7 +58,7 @@ func (repo ProductRepository) FindProductsByIDs(ctx context.Context, tx sqlcs.DB
 func (ProductRepository) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]ProductStock, error) {
 	queries := sqlcs.New(tx)
 
-	xstocks, err := queries.FindAllProductStocksByIDs(ctx, stringULIDs(productIDs))
+	xstocks, err := queries.FindAllProductStocksByIDs(ctx, pkgutil.StringULIDs(productIDs))
 	if err != nil {
 		return nil, fmt.Errorf("[FindAllProductStocksByIDs] FindAllProductStocksByIDs: %w", err)
 	}

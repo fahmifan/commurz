@@ -23,7 +23,9 @@ func (arg Preload[Target, PreloadItem, RefKey]) Preload() ([]Target, error) {
 
 	for i := range arg.Targets {
 		key := arg.RefTarget(arg.Targets[i])
-		arg.SetItem(&arg.Targets[i], mapper[key])
+		if item, ok := mapper[key]; ok {
+			arg.SetItem(&arg.Targets[i], item)
+		}
 	}
 
 	return arg.Targets, nil
@@ -51,7 +53,9 @@ func (arg PreloadMany[Target, PreloadItem, RefKey]) Preload() ([]Target, error) 
 
 	for i := range arg.Targets {
 		key := arg.RefTarget(arg.Targets[i])
-		arg.SetItem(&arg.Targets[i], mapper[key])
+		if item, ok := mapper[key]; ok {
+			arg.SetItem(&arg.Targets[i], item)
+		}
 	}
 
 	return arg.Targets, nil

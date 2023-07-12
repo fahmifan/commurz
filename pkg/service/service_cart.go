@@ -53,45 +53,17 @@ func (s *Service) AddItemToCart(ctx context.Context, req AddItemToCartRequest) (
 	return cart, nil
 }
 
-func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID ulids.ULID) (cart pkgorder.Cart, err error) {
-	cartRepo := pkgorder.CartRepository{}
-
-	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
-
-	if err != nil && !isNotFoundErr(err) {
-		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
-	}
-
-	if err == nil {
-		return cart, nil
-	}
-
-	cart = pkgorder.NewCart(userID)
-	_, err = cartRepo.SaveCart(ctx, tx, cart)
-	if err != nil && !isNotFoundErr(err) {
-		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] SaveCart: %w", err)
-	}
-
-	// refresh cart data
-	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
-	if err != nil {
-		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
-	}
-
-	return cart, nil
-}
-
 type CheckoutAllRequest struct {
 	UserID ulids.ULID `json:"user_id"`
 }
 
+// CheckoutAll will checkout all items in a cart
 func (s *Service) CheckoutAll(ctx context.Context, req CheckoutAllRequest) (order pkgorder.Order, err error) {
 	orderNumber := pkgorder.OrderNumber(ulids.New().String())
+	cartRepo := pkgorder.CartRepository{}
+	orderRepo := pkgorder.OrderRepository{}
 
 	err = Transaction(ctx, s.db, func(tx *sql.Tx) error {
-		cartRepo := pkgorder.CartRepository{}
-		orderRepo := pkgorder.OrderRepository{}
-
 		cart, err := cartRepo.FindCartByUserID(ctx, tx, req.UserID)
 		if err != nil {
 			return fmt.Errorf("[CheckoutAll] FindCartByUserID: %w", err)
@@ -119,4 +91,32 @@ func (s *Service) CheckoutAll(ctx context.Context, req CheckoutAllRequest) (orde
 	}
 
 	return order, nil
+}
+
+func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID ulids.ULID) (cart pkgorder.Cart, err error) {
+	cartRepo := pkgorder.CartRepository{}
+
+	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
+
+	if err != nil && !isNotFoundErr(err) {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
+	}
+
+	if err == nil {
+		return cart, nil
+	}
+
+	cart = pkgorder.NewCart(userID)
+	_, err = cartRepo.SaveCart(ctx, tx, cart)
+	if err != nil && !isNotFoundErr(err) {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] SaveCart: %w", err)
+	}
+
+	// refresh cart data
+	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
+	if err != nil {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
+	}
+
+	return cart, nil
 }

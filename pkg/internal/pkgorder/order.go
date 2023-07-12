@@ -51,7 +51,7 @@ func (cart Cart) CheckoutAll(orderNumber OrderNumber) (Order, error) {
 	order := Order{
 		ID:     ulids.New(),
 		Number: orderNumber,
-		Items:  cart.orderItems(),
+		Items:  cart.getOrderItems(),
 	}
 
 	return order, nil
@@ -68,7 +68,7 @@ func (cart Cart) CheckoutByProducts(products []products.Product, orderNumber Ord
 	// check products stock
 
 	items := lo.Filter(
-		cart.orderItems(),
+		cart.getOrderItems(),
 		cart.filterOrderItemsByProduct(products),
 	)
 
@@ -146,7 +146,7 @@ func (c Cart) RemoveItem(id ulids.ULID) Cart {
 	return c
 }
 
-func (cart Cart) orderItems() []OrderItem {
+func (cart Cart) getOrderItems() []OrderItem {
 	orderID := ulids.New()
 
 	items := make([]OrderItem, len(cart.Items))

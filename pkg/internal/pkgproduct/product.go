@@ -2,14 +2,12 @@
 package pkgproduct
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
-	"github.com/samber/lo"
 )
 
 var (
@@ -55,7 +53,7 @@ func (product Product) AddStock(stockIn int64, createdAt time.Time) (Product, Pr
 }
 
 func (product Product) ReduceStock(stockOut int64, createdAt time.Time) (Product, ProductStock, error) {
-	if product.currentStock() < stockOut {
+	if product.CurrentStock() < stockOut {
 		return Product{}, ProductStock{}, ErrInsufficientStock
 	}
 
@@ -70,11 +68,12 @@ func (product Product) ReduceStock(stockOut int64, createdAt time.Time) (Product
 	return product, stock, nil
 }
 
+// HaveStock check if product have enough stock for the qty
 func (product Product) HaveStock(qty int64) bool {
-	return product.currentStock() >= qty
+	return product.CurrentStock() >= qty
 }
 
-func (product Product) currentStock() int64 {
+func (product Product) CurrentStock() int64 {
 	return product.totalStockIn() - product.totalStockOut()
 }
 
@@ -111,19 +110,4 @@ func productStockFromSqlc(from sqlcs.ProductStock, index int) ProductStock {
 		StockOut:  from.StockOut,
 		CreatedAt: from.CreatedAt,
 	}
-}
-
-func mustParseULID(s string) ulids.ULID {
-	return ulids.ULID{ULID: ulid.MustParse(s)}
-}
-
-func stringULIDs(ids []ulids.ULID) []string {
-	return lo.Map(ids, func(id ulids.ULID, index int) string {
-		return id.String()
-	})
-}
-
-func prettyJSON(v any) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
-	return string(b)
 }
