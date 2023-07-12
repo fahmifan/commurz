@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package commurzpb.v1;
+
+option go_package = "github.com/fahmifan/commurz/protogen/commurzpb/v1;commurzpbv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Resource definition
+message User {
+  string id = 1;
+  string email = 2;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 current_stock = 4;
+}
+
+message ProductStock {
+  string id = 1;
+  string productId = 2;
+  int64 stock_in = 3;
+  int64 stock_out = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Requests definition
+message CreateUserRequest {
+  string email = 1;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  int64 price = 2;
+}
+
+
+service CommurzService {
+  rpc CreateUser(CreateUserRequest) returns (User) {}
+  rpc CreateProduct(CreateProductRequest) returns (Product) {}
+}

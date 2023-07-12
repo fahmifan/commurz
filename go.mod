@@ -4,10 +4,12 @@ go 1.20
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/bufbuild/connect-go v1.9.0
 	github.com/fahmifan/ulids v1.1.0
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.2
+	google.golang.org/protobuf v1.31.0
 	modernc.org/sqlite v1.24.0
 )
 
