@@ -3,10 +3,9 @@ package cli
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"fmt"
 	"os"
 
+	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/service"
 	_ "modernc.org/sqlite"
 )
@@ -40,7 +39,7 @@ func Run(args ...string) error {
 		return err
 	}
 
-	fmt.Println("DEBUG >>> product >>>", prettyJSON(product))
+	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
 	product, err = svc.AddProductStock(ctx, service.AddProductStockRequest{
 		ProductID: product.ID,
@@ -50,7 +49,7 @@ func Run(args ...string) error {
 		return err
 	}
 
-	fmt.Println("DEBUG >>> product >>>", prettyJSON(product))
+	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
 	product, err = svc.ReduceProductStock(ctx, service.ReduceProductStockRequest{
 		ProductID: product.ID,
@@ -60,7 +59,7 @@ func Run(args ...string) error {
 		return err
 	}
 
-	fmt.Println("DEBUG >>> product >>>", prettyJSON(product))
+	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
 	cart, err := svc.AddItemToCart(ctx, service.AddItemToCartRequest{
 		ProductID: product.ID,
@@ -71,7 +70,7 @@ func Run(args ...string) error {
 		return err
 	}
 
-	fmt.Println("DEBUG >>> cart >>>", prettyJSON(cart))
+	pkgutil.PrintlnDebug("cart >>>", pkgutil.PrettyJSON(cart))
 
 	order, err := svc.CheckoutAll(ctx, service.CheckoutAllRequest{
 		UserID: user.ID,
@@ -80,13 +79,13 @@ func Run(args ...string) error {
 		return err
 	}
 
-	fmt.Println("DEBUG >>> order >>>", prettyJSON(order))
+	pkgutil.PrintlnDebug("order >>>", pkgutil.PrettyJSON(order))
 
 	return nil
 }
 
 func migrate(db *sql.DB) error {
-	filename := "schema.sql"
+	filename := "sqlcdef/schema.sql"
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -97,9 +96,4 @@ func migrate(db *sql.DB) error {
 	}
 
 	return nil
-}
-
-func prettyJSON(v any) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
-	return string(b)
 }

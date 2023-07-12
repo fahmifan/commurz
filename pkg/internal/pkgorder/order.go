@@ -1,10 +1,8 @@
-// Package pkgorder cart and order management
+// Package pkgorder to manage cart and order
 package pkgorder
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 
 	products "github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
@@ -62,7 +60,6 @@ func (cart Cart) CheckoutAll(orderNumber OrderNumber) (Order, error) {
 
 func (cart Cart) isAllItemsHaveStocks() bool {
 	return lo.EveryBy(cart.Items, func(item CartItem) bool {
-		fmt.Println("every item >>> ", prettyJSON(item))
 		return item.Product.HaveStock(item.Quantity)
 	})
 }
@@ -218,9 +215,4 @@ func stringULIDs(ids []ulids.ULID) []string {
 	return lo.Map(ids, func(id ulids.ULID, index int) string {
 		return id.String()
 	})
-}
-
-func prettyJSON(v any) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
-	return string(b)
 }
