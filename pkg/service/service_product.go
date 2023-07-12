@@ -42,7 +42,7 @@ type AddProductStockRequest struct {
 }
 
 func (service *Service) AddProductStock(ctx context.Context, req AddProductStockRequest) (product pkgproduct.Product, err error) {
-	err = Transaction(service.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
 		productRepo := pkgproduct.ProductRepository{}
 
 		product, err = productRepo.FindProductByID(ctx, tx, req.ProductID)
@@ -74,9 +74,9 @@ type ReduceProductStockRequest struct {
 }
 
 func (service *Service) ReduceProductStock(ctx context.Context, req ReduceProductStockRequest) (product pkgproduct.Product, err error) {
-	err = Transaction(service.db, func(tx *sql.Tx) error {
-		productRepo := pkgproduct.ProductRepository{}
+	productRepo := pkgproduct.ProductRepository{}
 
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
 		product, err = productRepo.FindProductByID(ctx, tx, req.ProductID)
 		if err != nil {
 			return fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
@@ -92,12 +92,16 @@ func (service *Service) ReduceProductStock(ctx context.Context, req ReduceProduc
 		if err != nil {
 			return fmt.Errorf("[ReduceProductStock] SaveProductStock: %w", err)
 		}
-
 		return nil
 	})
 
 	if err != nil {
 		return pkgproduct.Product{}, fmt.Errorf("[AddProductStock] Transaction: %w", err)
+	}
+
+	product, err = productRepo.FindProductByID(ctx, service.db, req.ProductID)
+	if err != nil {
+		return pkgproduct.Product{}, fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
 	}
 
 	return product, nil

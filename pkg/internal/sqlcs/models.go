@@ -24,6 +24,7 @@ type CartItem struct {
 type Order struct {
 	ID     string
 	UserID string
+	Number string
 }
 
 type OrderItem struct {

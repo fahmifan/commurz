@@ -41,6 +41,7 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
+    number TEXT NOT NULL,
     
     FOREIGN KEY (user_id) REFERENCES users (id)
 );

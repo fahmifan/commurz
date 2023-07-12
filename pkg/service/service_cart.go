@@ -24,7 +24,7 @@ func (s *Service) AddItemToCart(ctx context.Context, req AddItemToCartRequest) (
 		return pkgorder.Cart{}, fmt.Errorf("[AddItemToCart] getOrCreateCart: %w", err)
 	}
 
-	err = Transaction(s.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, s.db, func(tx *sql.Tx) error {
 		productRepo := pkgproduct.ProductRepository{}
 
 		product, err := productRepo.FindProductByID(ctx, tx, req.ProductID)
@@ -88,8 +88,9 @@ type CheckoutAllRequest struct {
 func (s *Service) CheckoutAll(ctx context.Context, req CheckoutAllRequest) (order pkgorder.Order, err error) {
 	orderNumber := pkgorder.OrderNumber(ulids.New().String())
 
-	err = Transaction(s.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, s.db, func(tx *sql.Tx) error {
 		cartRepo := pkgorder.CartRepository{}
+		orderRepo := pkgorder.OrderRepository{}
 
 		cart, err := cartRepo.FindCartByUserID(ctx, tx, req.UserID)
 		if err != nil {
@@ -99,6 +100,16 @@ func (s *Service) CheckoutAll(ctx context.Context, req CheckoutAllRequest) (orde
 		order, err = cart.CheckoutAll(orderNumber)
 		if err != nil {
 			return fmt.Errorf("[CheckoutAll] CheckoutAll: %w", err)
+		}
+
+		order, err = orderRepo.CreateOrder(ctx, tx, order)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] CreateOrder: %w", err)
+		}
+
+		err = cartRepo.DeleteCart(ctx, tx, cart)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] DeleteCart: %w", err)
 		}
 
 		return nil

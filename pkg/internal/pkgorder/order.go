@@ -50,7 +50,6 @@ func (cart Cart) CheckoutAll(orderNumber OrderNumber) (Order, error) {
 
 	order := Order{
 		ID:     ulids.New(),
-		CartID: cart.ID,
 		Number: orderNumber,
 		Items:  cart.orderItems(),
 	}
@@ -75,7 +74,6 @@ func (cart Cart) CheckoutByProducts(products []products.Product, orderNumber Ord
 
 	return Order{
 		ID:     ulids.New(),
-		CartID: cart.ID,
 		Number: orderNumber,
 		Items:  items,
 	}
@@ -193,9 +191,18 @@ type OrderNumber string
 
 type Order struct {
 	ID     ulids.ULID
-	CartID ulids.ULID
+	UserID ulids.ULID
 	Number OrderNumber
-	Items  []OrderItem
+
+	Items []OrderItem
+}
+
+func orderFromSqlc(xorder sqlcs.Order) Order {
+	return Order{
+		ID:     mustParseULID(xorder.ID),
+		UserID: mustParseULID(xorder.UserID),
+		Number: OrderNumber(xorder.Number),
+	}
 }
 
 type OrderItem struct {

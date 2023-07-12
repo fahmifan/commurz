@@ -28,11 +28,16 @@ func TestPreload(t *testing.T) {
 		{UserID: 2, Detail: "Address 22"},
 	}
 
-	preloadedUsers := preloads.Preload(users, addresses, preloads.PreloadArg[User, Address, int]{
-		KeyByItem:   func(item Address) int { return item.UserID },
-		KeyByTarget: func(target User) int { return target.ID },
-		SetItem:     func(target *User, item Address) { target.Addresses = item },
-	})
+	preloadedUsers, err := preloads.Preload[User, Address, int]{
+		Targets:    users,
+		RefItem:    func(item Address) int { return item.UserID },
+		RefTarget:  func(target User) int { return target.ID },
+		SetItem:    func(target *User, item Address) { target.Addresses = item },
+		FetchItems: func() ([]Address, error) { return addresses, nil },
+	}.Preload()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expected := []User{
 		{ID: 1, Addresses: Address{UserID: 1, Detail: "Address 11"}},
@@ -82,15 +87,16 @@ func TestPreloadMany(t *testing.T) {
 		{UserID: 2, Detail: "Address 44"},
 	}
 
-	preloadedUsers := preloads.PreloadsMany(users, addresses,
-		preloads.PreloadManyArg[User, Address, int]{
-			KeyByItem:   func(item Address) int { return item.UserID },
-			KeyByTarget: func(target User) int { return target.ID },
-			SetItem: func(target *User, items []Address) {
-				target.Addresses = items
-			},
-		},
-	)
+	preloadedUsers, err := preloads.PreloadMany[User, Address, int]{
+		Targets:    users,
+		RefItem:    func(item Address) int { return item.UserID },
+		RefTarget:  func(target User) int { return target.ID },
+		SetItem:    func(target *User, items []Address) { target.Addresses = items },
+		FetchItems: func() ([]Address, error) { return addresses, nil },
+	}.Preload()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expected := []User{
 		{

@@ -56,20 +56,19 @@ func (CartRepository) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, car
 	}
 
 	items := lo.Map(xitems, cartItemFromSqlc)
-	productIDs := lo.Map(items, func(item CartItem, index int) ulids.ULID {
-		return item.ProductID
-	})
-
-	allProducts, err := productRepo.FindProductsByIDs(ctx, tx, productIDs)
+	productIDs := lo.Map(items, func(item CartItem, index int) ulids.ULID { return item.ProductID })
+	items, err = preloads.Preload[CartItem, pkgproduct.Product, ulids.ULID]{
+		Targets:   items,
+		RefItem:   func(item pkgproduct.Product) ulids.ULID { return item.ID },
+		RefTarget: func(target CartItem) ulids.ULID { return target.ProductID },
+		SetItem:   func(item *CartItem, target pkgproduct.Product) { item.Product = target },
+		FetchItems: func() ([]pkgproduct.Product, error) {
+			return productRepo.FindProductsByIDs(ctx, tx, productIDs)
+		},
+	}.Preload()
 	if err != nil {
-		return nil, fmt.Errorf("[FindCartItemsByIDs] FindAllProductsByIDs: %w", err)
+		return nil, fmt.Errorf("[FindCartItemsByIDs] preload products: %w", err)
 	}
-
-	items = preloads.Preload(items, allProducts, preloads.PreloadArg[CartItem, pkgproduct.Product, ulids.ULID]{
-		KeyByItem:   func(item pkgproduct.Product) ulids.ULID { return item.ID },
-		KeyByTarget: func(target CartItem) ulids.ULID { return target.ProductID },
-		SetItem:     func(item *CartItem, target pkgproduct.Product) { item.Product = target },
-	})
 
 	return items, nil
 }
@@ -108,4 +107,32 @@ func (CartRepository) SaveCartItem(ctx context.Context, tx sqlcs.DBTX, cartItem 
 	newCartItem.Product = cartItem.Product
 
 	return newCartItem, nil
+}
+
+func (CartRepository) DeleteCart(ctx context.Context, tx sqlcs.DBTX, cart Cart) error {
+	query := sqlcs.New(tx)
+
+	err := query.DeleteCart(ctx, cart.ID.String())
+	if err != nil {
+		return fmt.Errorf("[DeleteCart] DeleteCart: %w", err)
+	}
+
+	return nil
+}
+
+type OrderRepository struct{}
+
+func (OrderRepository) CreateOrder(ctx context.Context, tx sqlcs.DBTX, order Order) (Order, error) {
+	query := sqlcs.New(tx)
+
+	xorder, err := query.SaveOrder(ctx, sqlcs.SaveOrderParams{
+		ID:     order.ID.String(),
+		UserID: order.UserID.String(),
+		Number: string(order.Number),
+	})
+	if err != nil {
+		return Order{}, fmt.Errorf("[CreateOrder] CreateOrder: %w", err)
+	}
+
+	return orderFromSqlc(xorder), nil
 }

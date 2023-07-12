@@ -77,6 +77,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteCart = `-- name: DeleteCart :exec
+DELETE FROM carts WHERE id = ?
+`
+
+func (q *Queries) DeleteCart(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteCart, id)
+	return err
+}
+
 const findAllCartItemsByCartIDs = `-- name: FindAllCartItemsByCartIDs :many
 SELECT id, cart_id, product_id, quantity, price FROM cart_items WHERE cart_id IN (/*SLICE:cart_ids*/?)
 `
@@ -267,20 +276,21 @@ func (q *Queries) SaveCartItem(ctx context.Context, arg SaveCartItemParams) (Car
 }
 
 const saveOrder = `-- name: SaveOrder :one
-INSERT INTO orders (id, user_id)
-VALUES (?1, ?2)
-RETURNING id, user_id
+INSERT INTO orders (id, user_id, number)
+VALUES (?1, ?2, ?3)
+RETURNING id, user_id, number
 `
 
 type SaveOrderParams struct {
 	ID     string
 	UserID string
+	Number string
 }
 
 func (q *Queries) SaveOrder(ctx context.Context, arg SaveOrderParams) (Order, error) {
-	row := q.db.QueryRowContext(ctx, saveOrder, arg.ID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, saveOrder, arg.ID, arg.UserID, arg.Number)
 	var i Order
-	err := row.Scan(&i.ID, &i.UserID)
+	err := row.Scan(&i.ID, &i.UserID, &i.Number)
 	return i, err
 }
 

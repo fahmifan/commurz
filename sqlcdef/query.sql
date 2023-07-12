@@ -22,8 +22,8 @@ VALUES (@id, @cart_id, @product_id, @quantity, @price)
 RETURNING *;
 
 -- name: SaveOrder :one
-INSERT INTO orders (id, user_id)
-VALUES (@id, @user_id)
+INSERT INTO orders (id, user_id, number)
+VALUES (@id, @user_id, @number)
 RETURNING *;
 
 -- name: SaveOrderItems :one
@@ -58,3 +58,6 @@ RETURNING *;
 INSERT INTO users (id, email)
 VALUES (@id, @email)
 RETURNING *;
+
+-- name: DeleteCart :exec
+DELETE FROM carts WHERE id = ?;

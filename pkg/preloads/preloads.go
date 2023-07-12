@@ -1,54 +1,58 @@
 package preloads
 
-type getKey[Key comparable, T any] func(t T) Key
+type getRef[Ref comparable, T any] func(t T) Ref
 
-type PreloadArg[Target, PreloadItem any, Key comparable] struct {
-	KeyByItem   getKey[Key, PreloadItem]
-	KeyByTarget getKey[Key, Target]
-	SetItem     func(target *Target, items PreloadItem)
+type Preload[Target, PreloadItem any, RefKey comparable] struct {
+	Targets    []Target
+	RefItem    getRef[RefKey, PreloadItem]
+	RefTarget  getRef[RefKey, Target]
+	SetItem    func(target *Target, items PreloadItem)
+	FetchItems func() ([]PreloadItem, error)
 }
 
-// Preload is a function to preload one item to many targets
-func Preload[Target any, PreloadItem any, Key comparable](
-	targets []Target,
-	preloadItems []PreloadItem,
-	arg PreloadArg[Target, PreloadItem, Key],
-) []Target {
-	mapper := make(map[Key]PreloadItem, len(preloadItems))
-	for _, item := range preloadItems {
-		mapper[arg.KeyByItem(item)] = item
+func (arg Preload[Target, PreloadItem, RefKey]) Preload() ([]Target, error) {
+	preloadItems, err := arg.FetchItems()
+	if err != nil {
+		return nil, err
 	}
 
-	for i := range targets {
-		key := arg.KeyByItem(preloadItems[i])
-		arg.SetItem(&targets[i], mapper[key])
+	mapper := make(map[RefKey]PreloadItem, len(preloadItems))
+	for _, item := range preloadItems {
+		mapper[arg.RefItem(item)] = item
 	}
 
-	return targets
+	for i := range arg.Targets {
+		key := arg.RefTarget(arg.Targets[i])
+		arg.SetItem(&arg.Targets[i], mapper[key])
+	}
+
+	return arg.Targets, nil
 }
 
-type PreloadManyArg[Target, PreloadItem any, Key comparable] struct {
-	KeyByItem   getKey[Key, PreloadItem]
-	KeyByTarget getKey[Key, Target]
-	SetItem     func(target *Target, items []PreloadItem)
+type PreloadMany[Target, PreloadItem any, RefKey comparable] struct {
+	Targets    []Target
+	RefItem    getRef[RefKey, PreloadItem]
+	RefTarget  getRef[RefKey, Target]
+	SetItem    func(target *Target, items []PreloadItem)
+	FetchItems func() ([]PreloadItem, error)
 }
 
-// PreloadsMany is a function to preload many items to many targets
-func PreloadsMany[Target any, PreloadItem any, Key comparable](
-	targets []Target,
-	preloadItems []PreloadItem,
-	arg PreloadManyArg[Target, PreloadItem, Key],
-) []Target {
-	mapper := make(map[Key][]PreloadItem, len(preloadItems))
+func (arg PreloadMany[Target, PreloadItem, RefKey]) Preload() ([]Target, error) {
+	preloadItems, err := arg.FetchItems()
+	if err != nil {
+		return nil, err
+	}
+
+	mapper := make(map[RefKey][]PreloadItem, len(preloadItems))
 	for _, item := range preloadItems {
-		key := arg.KeyByItem(item)
+		key := arg.RefItem(item)
 		mapper[key] = append(mapper[key], item)
 	}
 
-	for i := range targets {
-		key := arg.KeyByTarget(targets[i])
-		arg.SetItem(&targets[i], mapper[key])
+	for i := range arg.Targets {
+		key := arg.RefTarget(arg.Targets[i])
+		arg.SetItem(&arg.Targets[i], mapper[key])
 	}
 
-	return targets
+	return arg.Targets, nil
 }

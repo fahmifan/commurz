@@ -1,13 +1,14 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 )
 
-func Transaction(db *sql.DB, fn func(*sql.Tx) error) error {
-	tx, err := db.Begin()
+func Transaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}

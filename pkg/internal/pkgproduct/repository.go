@@ -37,20 +37,19 @@ func (repo ProductRepository) FindProductsByIDs(ctx context.Context, tx sqlcs.DB
 	if err != nil {
 		return nil, fmt.Errorf("[FindProductsByIDs] FindAllProductsByIDs: %w", err)
 	}
-	products := lo.Map(xproducts, productFromSqlc)
 
-	xstocks, err := repo.FindAllProductStocksByIDs(ctx, tx, productIDs)
+	products, err := preloads.PreloadMany[Product, ProductStock, ulids.ULID]{
+		Targets:   lo.Map(xproducts, productFromSqlc),
+		RefItem:   func(item ProductStock) ulids.ULID { return item.ProductID },
+		RefTarget: func(target Product) ulids.ULID { return target.ID },
+		SetItem:   func(target *Product, items []ProductStock) { target.Stocks = items },
+		FetchItems: func() ([]ProductStock, error) {
+			return repo.FindAllProductStocksByIDs(ctx, tx, productIDs)
+		},
+	}.Preload()
 	if err != nil {
 		return nil, fmt.Errorf("[FindProductsByIDs] FindAllProductStocksByIDs: %w", err)
 	}
-
-	products = preloads.PreloadsMany(products, xstocks, preloads.PreloadManyArg[Product, ProductStock, ulids.ULID]{
-		KeyByItem:   func(item ProductStock) ulids.ULID { return item.ProductID },
-		KeyByTarget: func(target Product) ulids.ULID { return target.ID },
-		SetItem: func(item *Product, target []ProductStock) {
-			item.Stocks = target
-		},
-	})
 
 	return products, nil
 }
