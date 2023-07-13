@@ -84,10 +84,19 @@ message CheckoutAllRequest {
   string user_id = 1; // TODO: remove this, change to auth token/session
 }
 
+message ListUsersRequest {
+
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
 // Service definition
 service CommurzService {
   // user
   rpc CreateUser(CreateUserRequest) returns (User) {}
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
 
   // product
   rpc CreateProduct(CreateProductRequest) returns (Product) {}

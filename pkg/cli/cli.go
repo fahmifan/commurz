@@ -24,7 +24,9 @@ func Run(args ...string) error {
 	}
 
 	ctx := context.Background()
-	svc := service.NewService(service.NewConfig(db))
+	svc := service.NewService(&service.Config{
+		DB: db,
+	})
 
 	user, err := svc.CreateUser(ctx, &connect.Request[commurzpbv1.CreateUserRequest]{
 		Msg: &commurzpbv1.CreateUserRequest{

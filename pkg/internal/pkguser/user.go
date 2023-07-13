@@ -7,6 +7,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
+	"github.com/samber/lo"
 )
 
 type User struct {
@@ -38,6 +39,20 @@ func (UserRepository) FindUserByID(ctx context.Context, tx sqlcs.DBTX, id ulids.
 	}
 
 	return userFromSqlc(xuser), nil
+}
+
+func (UserRepository) FindAllUsers(ctx context.Context, tx sqlcs.DBTX) ([]User, error) {
+	queries := sqlcs.New(tx)
+	xusers, err := queries.FindAllUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("[FindAllUsers] FindAllUsers: %w", err)
+	}
+
+	users := lo.Map(xusers, func(xuser sqlcs.User, _ int) User {
+		return userFromSqlc(xuser)
+	})
+
+	return users, nil
 }
 
 func (UserRepository) CreateUser(ctx context.Context, tx sqlcs.DBTX, user User) (User, error) {

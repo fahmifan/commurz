@@ -59,5 +59,8 @@ INSERT INTO users (id, email)
 VALUES (@id, @email)
 RETURNING *;
 
+-- name: FindAllUsers :many
+SELECT * FROM users;
+
 -- name: DeleteCart :exec
 DELETE FROM carts WHERE id = ?;

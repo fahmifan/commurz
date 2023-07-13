@@ -8,6 +8,12 @@ import (
 	"github.com/samber/lo"
 )
 
+func ListFromUserPkg(users []pkguser.User) []*commurzpbv1.User {
+	return lo.Map(users, func(user pkguser.User, _ int) *commurzpbv1.User {
+		return FromUserPkg(user)
+	})
+}
+
 func FromUserPkg(user pkguser.User) *commurzpbv1.User {
 	return &commurzpbv1.User{
 		Id:    user.ID.String(),

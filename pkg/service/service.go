@@ -16,16 +16,15 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
+	"github.com/fahmifan/commurz/protogen/commurzpb/v1/commurzpbv1connect"
 	"github.com/fahmifan/ulids"
 )
 
 type Config struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
-func NewConfig(db *sql.DB) *Config {
-	return &Config{db}
-}
+var _ commurzpbv1connect.CommurzServiceHandler = &Service{}
 
 type Service struct {
 	*Config
@@ -35,6 +34,25 @@ func NewService(config *Config) *Service {
 	return &Service{config}
 }
 
+func (service *Service) ListUsers(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.ListUsersRequest],
+) (*connect.Response[commurzpbv1.ListUsersResponse], error) {
+	userRepo := pkguser.UserRepository{}
+	users, err := userRepo.FindAllUsers(ctx, service.DB)
+	if err != nil {
+		return nil, fmt.Errorf("[ListUsers] FindAllUsers: %w", err)
+	}
+
+	res := &connect.Response[commurzpbv1.ListUsersResponse]{
+		Msg: &commurzpbv1.ListUsersResponse{
+			Users: protoserde.ListFromUserPkg(users),
+		},
+	}
+
+	return res, nil
+}
+
 func (service *Service) CreateUser(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CreateUserRequest],
@@ -42,13 +60,13 @@ func (service *Service) CreateUser(
 	userRepo := pkguser.UserRepository{}
 
 	user := pkguser.NewUser(req.Msg.Email)
-	user, err = userRepo.CreateUser(ctx, service.db, user)
+	user, err = userRepo.CreateUser(ctx, service.DB, user)
 	if err != nil {
 		return res, fmt.Errorf("[CreateUser] SaveUser: %w", err)
 	}
 
 	// use complete user fields
-	user, err = userRepo.FindUserByID(ctx, service.db, user.ID)
+	user, err = userRepo.FindUserByID(ctx, service.DB, user.ID)
 	if err != nil {
 		return res, fmt.Errorf("[CreateUser] FindUserByID: %w", err)
 	}
@@ -67,13 +85,13 @@ func (service *Service) CreateProduct(
 	productRepo := pkgproduct.ProductRepository{}
 
 	product := pkgproduct.CreateProduct(req.Msg.Name, pkgproduct.Price(req.Msg.Price))
-	product, err = productRepo.SaveProduct(ctx, service.db, product)
+	product, err = productRepo.SaveProduct(ctx, service.DB, product)
 	if err != nil {
 		return res, fmt.Errorf("[CreateProduct] CreateProduct: %w", err)
 	}
 
 	// use complete product fields
-	product, err = productRepo.FindProductByID(ctx, service.db, product.ID)
+	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
 	if err != nil {
 		return res, fmt.Errorf("[CreateProduct] FindProductByID: %w", err)
 	}
@@ -91,7 +109,7 @@ func (service *Service) AddProductStock(
 ) (res *connect.Response[commurzpbv1.Product], err error) {
 	var product pkgproduct.Product
 
-	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
 		productRepo := pkgproduct.ProductRepository{}
 
 		productID, err := pkgutil.ParseULID(req.Msg.GetProductId())
@@ -138,7 +156,7 @@ func (service *Service) ReduceProductStock(
 		return nil, fmt.Errorf("[ReduceProductStock] ParseULID: %w", err)
 	}
 
-	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
 		product, err = productRepo.FindProductByID(ctx, tx, productID)
 		if err != nil {
 			return fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
@@ -160,7 +178,7 @@ func (service *Service) ReduceProductStock(
 		return nil, fmt.Errorf("[AddProductStock] Transaction: %w", err)
 	}
 
-	product, err = productRepo.FindProductByID(ctx, service.db, productID)
+	product, err = productRepo.FindProductByID(ctx, service.DB, productID)
 	if err != nil {
 		return nil, fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
 	}
@@ -187,12 +205,12 @@ func (service *Service) AddItemToCart(
 	}
 
 	cartRepo := pkgorder.CartRepository{}
-	cart, err := service.getOrCreateCart(ctx, service.db, userID)
+	cart, err := service.getOrCreateCart(ctx, service.DB, userID)
 	if err != nil {
 		return nil, fmt.Errorf("[AddItemToCart] getOrCreateCart: %w", err)
 	}
 
-	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
 		productRepo := pkgproduct.ProductRepository{}
 
 		product, err := productRepo.FindProductByID(ctx, tx, productID)
@@ -267,7 +285,7 @@ func (service *Service) CheckoutAll(
 	cartRepo := pkgorder.CartRepository{}
 	orderRepo := pkgorder.OrderRepository{}
 
-	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
 		cart, err := cartRepo.FindCartByUserID(ctx, tx, userID)
 		if err != nil {
 			return fmt.Errorf("[CheckoutAll] FindCartByUserID: %w", err)
