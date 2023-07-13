@@ -50,6 +50,7 @@ func (cart Cart) CheckoutAll(orderNumber OrderNumber) (Order, error) {
 
 	order := Order{
 		ID:     ulids.New(),
+		UserID: cart.UserID,
 		Number: orderNumber,
 		Items:  cart.getOrderItems(),
 	}

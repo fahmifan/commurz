@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"os"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/service"
+	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
 	_ "modernc.org/sqlite"
 )
 
@@ -24,61 +26,69 @@ func Run(args ...string) error {
 	ctx := context.Background()
 	svc := service.NewService(service.NewConfig(db))
 
-	user, err := svc.CreateUser(ctx, service.CreateUserRequest{
-		Email: "jondoe@email.com",
+	user, err := svc.CreateUser(ctx, &connect.Request[commurzpbv1.CreateUserRequest]{
+		Msg: &commurzpbv1.CreateUserRequest{
+			Email: "john@doe.com",
+		},
 	})
 	if err != nil {
 		return err
 	}
+	pkgutil.PrintlnDebug("user >>>", pkgutil.PrettyJSON(user))
 
-	product, err := svc.CreateProduct(ctx, service.CreateProductRequest{
-		Name:  "Kentang",
-		Price: 10,
+	product, err := svc.CreateProduct(ctx, &connect.Request[commurzpbv1.CreateProductRequest]{
+		Msg: &commurzpbv1.CreateProductRequest{
+			Name:  "Kentang",
+			Price: 10,
+		},
 	})
 	if err != nil {
 		return err
 	}
-
 	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
-	product, err = svc.AddProductStock(ctx, service.AddProductStockRequest{
-		ProductID: product.ID,
-		Quantity:  4,
+	product, err = svc.AddProductStock(ctx, &connect.Request[commurzpbv1.ChangeProductStockRequest]{
+		Msg: &commurzpbv1.ChangeProductStockRequest{
+			ProductId:     product.Msg.GetId(),
+			StockQuantity: 4,
+		},
 	})
 	if err != nil {
 		return err
 	}
-
 	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
-	product, err = svc.ReduceProductStock(ctx, service.ReduceProductStockRequest{
-		ProductID: product.ID,
-		Quantity:  1,
+	product, err = svc.ReduceProductStock(ctx, &connect.Request[commurzpbv1.ChangeProductStockRequest]{
+		Msg: &commurzpbv1.ChangeProductStockRequest{
+			ProductId:     product.Msg.GetId(),
+			StockQuantity: 1,
+		},
 	})
 	if err != nil {
 		return err
 	}
-
 	pkgutil.PrintlnDebug("product >>>", pkgutil.PrettyJSON(product))
 
-	cart, err := svc.AddItemToCart(ctx, service.AddItemToCartRequest{
-		ProductID: product.ID,
-		Quantity:  2,
-		UserID:    user.ID,
+	cart, err := svc.AddItemToCart(ctx, &connect.Request[commurzpbv1.AddItemToCartRequest]{
+		Msg: &commurzpbv1.AddItemToCartRequest{
+			ProductId: product.Msg.GetId(),
+			UserId:    user.Msg.GetId(),
+			Quantity:  2,
+		},
 	})
 	if err != nil {
 		return err
 	}
-
 	pkgutil.PrintlnDebug("cart >>>", pkgutil.PrettyJSON(cart))
 
-	order, err := svc.CheckoutAll(ctx, service.CheckoutAllRequest{
-		UserID: user.ID,
+	order, err := svc.CheckoutAll(ctx, &connect.Request[commurzpbv1.CheckoutAllRequest]{
+		Msg: &commurzpbv1.CheckoutAllRequest{
+			UserId: user.Msg.GetId(),
+		},
 	})
 	if err != nil {
 		return err
 	}
-
 	pkgutil.PrintlnDebug("order >>>", pkgutil.PrettyJSON(order))
 
 	return nil
