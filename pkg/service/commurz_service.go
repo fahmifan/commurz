@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
+	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
 	"github.com/fahmifan/commurz/protogen/commurzpb/v1/commurzpbv1connect"
+	"github.com/fahmifan/ulids"
 )
 
 var _ commurzpbv1connect.CommurzServiceHandler = &CommurzService{}
@@ -91,7 +94,7 @@ func (service *CommurzService) AddProductStock(
 		}
 
 		var stock pkgproduct.ProductStock
-		product, stock = product.AddStock(req.Msg.GetStockQty(), time.Now())
+		product, stock = product.AddStock(req.Msg.GetStockQuantity(), time.Now())
 
 		_, err = productRepo.SaveProductStock(ctx, tx, stock)
 		if err != nil {
@@ -131,7 +134,7 @@ func (service *CommurzService) ReduceProductStock(
 		}
 
 		var stock pkgproduct.ProductStock
-		product, stock, err = product.ReduceStock(req.Msg.GetStockQty(), time.Now())
+		product, stock, err = product.ReduceStock(req.Msg.GetStockQuantity(), time.Now())
 		if err != nil {
 			return fmt.Errorf("[ReduceProductStock] ReduceStock: %w", err)
 		}
@@ -153,6 +156,132 @@ func (service *CommurzService) ReduceProductStock(
 
 	res := &connect.Response[commurzpbv1.Product]{
 		Msg: protoserde.FromProductPkg(product),
+	}
+
+	return res, nil
+}
+
+func (service *CommurzService) AddItemToCart(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.AddItemToCartRequest],
+) (*connect.Response[commurzpbv1.Cart], error) {
+	userID := ulids.New()
+
+	productID, err := pkgutil.ParseULID(req.Msg.ProductId)
+	if err != nil {
+		return nil, fmt.Errorf("[AddItemToCart] parse productID: %w", err)
+	}
+
+	cartRepo := pkgorder.CartRepository{}
+	cart, err := service.getOrCreateCart(ctx, service.db, userID)
+	if err != nil {
+		return nil, fmt.Errorf("[AddItemToCart] getOrCreateCart: %w", err)
+	}
+
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+		productRepo := pkgproduct.ProductRepository{}
+
+		product, err := productRepo.FindProductByID(ctx, tx, productID)
+		if err != nil {
+			return fmt.Errorf("[AddItemToCart] FindProductByID: %w", err)
+		}
+
+		var cartItem pkgorder.CartItem
+
+		cart, cartItem, err = cart.AddItem(product, req.Msg.GetQuantity())
+		if err != nil {
+			return fmt.Errorf("[AddItemToCart] AddItem: %w", err)
+		}
+
+		_, err = cartRepo.SaveCartItem(ctx, tx, cartItem)
+		if err != nil {
+			return fmt.Errorf("[AddItemToCart] SaveCartItem: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("[AddItemToCart] Transaction: %w", err)
+	}
+
+	res := &connect.Response[commurzpbv1.Cart]{
+		Msg: protoserde.FromCartPkg(cart),
+	}
+
+	return res, nil
+}
+
+func (service *CommurzService) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID ulids.ULID) (cart pkgorder.Cart, err error) {
+	cartRepo := pkgorder.CartRepository{}
+
+	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
+
+	if err != nil && !isNotFoundErr(err) {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
+	}
+
+	if err == nil {
+		return cart, nil
+	}
+
+	cart = pkgorder.NewCart(userID)
+	_, err = cartRepo.SaveCart(ctx, tx, cart)
+	if err != nil && !isNotFoundErr(err) {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] SaveCart: %w", err)
+	}
+
+	// refresh cart data
+	cart, err = cartRepo.FindCartByUserID(ctx, tx, userID)
+	if err != nil {
+		return pkgorder.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
+	}
+
+	return cart, nil
+}
+
+func (service *CommurzService) CheckoutAll(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.CheckoutAllRequest],
+) (*connect.Response[commurzpbv1.Order], error) {
+	userID, err := pkgutil.ParseULID(req.Msg.UserId)
+	if err != nil {
+		return nil, fmt.Errorf("[CheckoutAll] parse userID: %w", err)
+	}
+	order := pkgorder.Order{}
+
+	orderNumber := pkgorder.OrderNumber(ulids.New().String())
+	cartRepo := pkgorder.CartRepository{}
+	orderRepo := pkgorder.OrderRepository{}
+
+	err = Transaction(ctx, service.db, func(tx *sql.Tx) error {
+		cart, err := cartRepo.FindCartByUserID(ctx, tx, userID)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] FindCartByUserID: %w", err)
+		}
+
+		order, err = cart.CheckoutAll(orderNumber)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] CheckoutAll: %w", err)
+		}
+
+		order, err = orderRepo.CreateOrder(ctx, tx, order)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] CreateOrder: %w", err)
+		}
+
+		err = cartRepo.DeleteCart(ctx, tx, cart)
+		if err != nil {
+			return fmt.Errorf("[CheckoutAll] DeleteCart: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("[CheckoutAll] Transaction: %w", err)
+	}
+
+	res := &connect.Response[commurzpbv1.Order]{
+		Msg: protoserde.FromOrderPkg(order),
 	}
 
 	return res, nil

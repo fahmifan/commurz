@@ -19,6 +19,45 @@ message Product {
   int64 current_stock = 4;
 }
 
+message OrderProduct {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 current_stock = 4;
+}
+
+message Cart {
+  string id = 1;
+  string user_id = 2;
+  
+  User user = 3;
+  repeated CartItem items = 4;
+}
+
+message CartItem {
+  string id = 1;
+  string cart_id = 2;
+  string product_id = 3;
+  int64 quantity = 4;
+  int64 product_price = 5;
+  OrderProduct product = 6;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  int64 total_price = 3;
+}
+
+message OrderItem {
+  string id = 1;
+  string order_id = 2;
+  string product_id = 3;
+  int64 quantity = 4;
+  int64 product_price = 5;
+  OrderProduct product = 6;
+}
+
 // Requests definition
 message CreateUserRequest {
   string email = 1;
@@ -31,15 +70,31 @@ message CreateProductRequest {
 
 message ChangeProductStockRequest {
   string productId = 1;
-  int64 stock_qty = 2;
+  int64 stock_quantity = 2;
+}
+
+message AddItemToCartRequest {
+  string productId = 1;
+  int64 quantity = 2;
+  
+  string user_id = 3; // TODO: remove this, change to auth token/session
+}
+
+message CheckoutAllRequest {
+  string user_id = 1; // TODO: remove this, change to auth token/session
 }
 
 // Service definition
 service CommurzService {
+  // user
   rpc CreateUser(CreateUserRequest) returns (User) {}
 
-  // products
+  // product
   rpc CreateProduct(CreateProductRequest) returns (Product) {}
   rpc AddProductStock(ChangeProductStockRequest) returns (Product) {}
   rpc ReduceProductStock(ChangeProductStockRequest) returns (Product) {}
+
+  // cart
+  rpc AddItemToCart(AddItemToCartRequest) returns (Cart) {}
+  rpc CheckoutAll(CheckoutAllRequest) returns (Order) {}
 }

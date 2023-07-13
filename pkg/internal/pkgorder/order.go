@@ -205,6 +205,15 @@ func orderFromSqlc(xorder sqlcs.Order) Order {
 	}
 }
 
+func (order Order) TotalPrice() Price {
+	var totalPrice Price
+	for _, item := range order.Items {
+		totalPrice += item.Price * Price(item.Quantity)
+	}
+
+	return totalPrice
+}
+
 type OrderItem struct {
 	ID         ulids.ULID
 	OrderID    ulids.ULID

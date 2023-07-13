@@ -45,15 +45,25 @@ const (
 	// CommurzServiceReduceProductStockProcedure is the fully-qualified name of the CommurzService's
 	// ReduceProductStock RPC.
 	CommurzServiceReduceProductStockProcedure = "/commurzpb.v1.CommurzService/ReduceProductStock"
+	// CommurzServiceAddItemToCartProcedure is the fully-qualified name of the CommurzService's
+	// AddItemToCart RPC.
+	CommurzServiceAddItemToCartProcedure = "/commurzpb.v1.CommurzService/AddItemToCart"
+	// CommurzServiceCheckoutAllProcedure is the fully-qualified name of the CommurzService's
+	// CheckoutAll RPC.
+	CommurzServiceCheckoutAllProcedure = "/commurzpb.v1.CommurzService/CheckoutAll"
 )
 
 // CommurzServiceClient is a client for the commurzpb.v1.CommurzService service.
 type CommurzServiceClient interface {
+	// user
 	CreateUser(context.Context, *connect_go.Request[v1.CreateUserRequest]) (*connect_go.Response[v1.User], error)
-	// products
+	// product
 	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
 	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
+	// cart
+	AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error)
+	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
 }
 
 // NewCommurzServiceClient constructs a client for the commurzpb.v1.CommurzService service. By
@@ -86,6 +96,16 @@ func NewCommurzServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+CommurzServiceReduceProductStockProcedure,
 			opts...,
 		),
+		addItemToCart: connect_go.NewClient[v1.AddItemToCartRequest, v1.Cart](
+			httpClient,
+			baseURL+CommurzServiceAddItemToCartProcedure,
+			opts...,
+		),
+		checkoutAll: connect_go.NewClient[v1.CheckoutAllRequest, v1.Order](
+			httpClient,
+			baseURL+CommurzServiceCheckoutAllProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -95,6 +115,8 @@ type commurzServiceClient struct {
 	createProduct      *connect_go.Client[v1.CreateProductRequest, v1.Product]
 	addProductStock    *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
 	reduceProductStock *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
+	addItemToCart      *connect_go.Client[v1.AddItemToCartRequest, v1.Cart]
+	checkoutAll        *connect_go.Client[v1.CheckoutAllRequest, v1.Order]
 }
 
 // CreateUser calls commurzpb.v1.CommurzService.CreateUser.
@@ -117,13 +139,27 @@ func (c *commurzServiceClient) ReduceProductStock(ctx context.Context, req *conn
 	return c.reduceProductStock.CallUnary(ctx, req)
 }
 
+// AddItemToCart calls commurzpb.v1.CommurzService.AddItemToCart.
+func (c *commurzServiceClient) AddItemToCart(ctx context.Context, req *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+	return c.addItemToCart.CallUnary(ctx, req)
+}
+
+// CheckoutAll calls commurzpb.v1.CommurzService.CheckoutAll.
+func (c *commurzServiceClient) CheckoutAll(ctx context.Context, req *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error) {
+	return c.checkoutAll.CallUnary(ctx, req)
+}
+
 // CommurzServiceHandler is an implementation of the commurzpb.v1.CommurzService service.
 type CommurzServiceHandler interface {
+	// user
 	CreateUser(context.Context, *connect_go.Request[v1.CreateUserRequest]) (*connect_go.Response[v1.User], error)
-	// products
+	// product
 	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
 	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
+	// cart
+	AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error)
+	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
 }
 
 // NewCommurzServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -152,6 +188,16 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 		svc.ReduceProductStock,
 		opts...,
 	)
+	commurzServiceAddItemToCartHandler := connect_go.NewUnaryHandler(
+		CommurzServiceAddItemToCartProcedure,
+		svc.AddItemToCart,
+		opts...,
+	)
+	commurzServiceCheckoutAllHandler := connect_go.NewUnaryHandler(
+		CommurzServiceCheckoutAllProcedure,
+		svc.CheckoutAll,
+		opts...,
+	)
 	return "/commurzpb.v1.CommurzService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CommurzServiceCreateUserProcedure:
@@ -162,6 +208,10 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 			commurzServiceAddProductStockHandler.ServeHTTP(w, r)
 		case CommurzServiceReduceProductStockProcedure:
 			commurzServiceReduceProductStockHandler.ServeHTTP(w, r)
+		case CommurzServiceAddItemToCartProcedure:
+			commurzServiceAddItemToCartHandler.ServeHTTP(w, r)
+		case CommurzServiceCheckoutAllProcedure:
+			commurzServiceCheckoutAllHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -185,4 +235,12 @@ func (UnimplementedCommurzServiceHandler) AddProductStock(context.Context, *conn
 
 func (UnimplementedCommurzServiceHandler) ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.ReduceProductStock is not implemented"))
+}
+
+func (UnimplementedCommurzServiceHandler) AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.AddItemToCart is not implemented"))
+}
+
+func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurzpb.v1.CommurzService.CheckoutAll is not implemented"))
 }
