@@ -6,6 +6,8 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bufbuild/connect-go v1.9.0
 	github.com/fahmifan/ulids v1.1.0
+	github.com/flosch/pongo2/v6 v6.0.0
+	github.com/labstack/echo/v4 v4.10.2
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.2
@@ -16,11 +18,8 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/flosch/pongo2/v6 v6.0.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/kr/pretty v0.2.1 // indirect
-	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -37,7 +36,6 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
