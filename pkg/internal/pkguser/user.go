@@ -3,6 +3,7 @@ package pkguser
 import (
 	"context"
 	"fmt"
+	"net/mail"
 
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
@@ -15,11 +16,18 @@ type User struct {
 	Email string
 }
 
-func NewUser(email string) User {
-	return User{
+func NewUser(email string) (User, error) {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		return User{}, fmt.Errorf("[NewUser] ParseAddress: %w", err)
+	}
+
+	user := User{
 		ID:    ulids.New(),
 		Email: email,
 	}
+
+	return user, nil
 }
 
 func userFromSqlc(xuser sqlcs.User) User {

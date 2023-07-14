@@ -25,8 +25,9 @@ func FromProductPkg(product pkgproduct.Product) *commurzpbv1.Product {
 	return &commurzpbv1.Product{
 		Id:           product.ID.String(),
 		Name:         product.Name,
-		Price:        int64(product.Price),
+		Price:        product.Price.Value(),
 		CurrentStock: product.CurrentStock(),
+		TextPriceIdr: product.Price.String(),
 	}
 }
 
@@ -49,7 +50,7 @@ func FromCartItemPkg(item pkgorder.CartItem) *commurzpbv1.CartItem {
 		ProductId:    item.ProductID.String(),
 		Quantity:     item.Quantity,
 		CartId:       item.CartID.String(),
-		ProductPrice: int64(item.ProductPrice),
+		ProductPrice: item.ProductPrice.Value(),
 		Product:      FromProductToOrderProduct(item.Product),
 	}
 }
@@ -58,7 +59,7 @@ func FromProductToOrderProduct(product pkgproduct.Product) *commurzpbv1.OrderPro
 	return &commurzpbv1.OrderProduct{
 		Id:           product.ID.String(),
 		Name:         product.Name,
-		Price:        int64(product.Price),
+		Price:        product.Price.Value(),
 		CurrentStock: product.CurrentStock(),
 	}
 }
@@ -67,6 +68,6 @@ func FromOrderPkg(order pkgorder.Order) *commurzpbv1.Order {
 	return &commurzpbv1.Order{
 		Id:         order.ID.String(),
 		UserId:     order.UserID.String(),
-		TotalPrice: int64(order.TotalPrice()),
+		TotalPrice: order.TotalPrice().IDR(),
 	}
 }

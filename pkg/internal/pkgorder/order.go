@@ -4,6 +4,7 @@ package pkgorder
 import (
 	"errors"
 
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	products "github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
@@ -18,8 +19,6 @@ var (
 	ErrOutOfStock        = errors.New("out of stock")
 	ErrInsufficientStock = errors.New("insufficient stock")
 )
-
-type Price int64
 
 type Cart struct {
 	ID     ulids.ULID
@@ -159,7 +158,7 @@ func (cart Cart) getOrderItems() []OrderItem {
 			OrderID:    orderID,
 			CartItemID: cartItem.ID,
 			Product:    cartItem.Product,
-			Price:      Price(cartItem.ProductPrice),
+			Price:      cartItem.ProductPrice,
 			Quantity:   cartItem.Quantity,
 		}
 	}
@@ -173,7 +172,7 @@ type CartItem struct {
 	ProductID ulids.ULID `json:"product_id" db:"product_id"`
 	Quantity  int64      `json:"quantity" db:"quantity"`
 	// ProductPrice is price per product that will be used when checkout
-	ProductPrice products.Price `json:"product_price" db:"product_price"`
+	ProductPrice pkgprice.Price `json:"product_price" db:"product_price"`
 
 	Product products.Product `json:"product" db:"-"`
 }
@@ -184,7 +183,7 @@ func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
 		CartID:       mustParseULID(xcartItem.CartID),
 		ProductID:    mustParseULID(xcartItem.ProductID),
 		Quantity:     xcartItem.Quantity,
-		ProductPrice: products.Price(xcartItem.Price),
+		ProductPrice: pkgprice.New(xcartItem.Price),
 	}
 }
 
@@ -206,10 +205,10 @@ func orderFromSqlc(xorder sqlcs.Order) Order {
 	}
 }
 
-func (order Order) TotalPrice() Price {
-	var totalPrice Price
+func (order Order) TotalPrice() pkgprice.Price {
+	var totalPrice pkgprice.Price
 	for _, item := range order.Items {
-		totalPrice += item.Price * Price(item.Quantity)
+		totalPrice = item.Price.Times(item.Quantity)
 	}
 
 	return totalPrice
@@ -220,7 +219,7 @@ type OrderItem struct {
 	OrderID    ulids.ULID
 	CartItemID ulids.ULID
 	Product    products.Product
-	Price      Price
+	Price      pkgprice.Price
 	Quantity   int64
 }
 

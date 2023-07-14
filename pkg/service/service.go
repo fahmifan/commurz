@@ -10,6 +10,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
@@ -59,7 +60,11 @@ func (service *Service) CreateUser(
 ) (res *connect.Response[commurzpbv1.User], err error) {
 	userRepo := pkguser.UserRepository{}
 
-	user := pkguser.NewUser(req.Msg.Email)
+	user, err := pkguser.NewUser(req.Msg.Email)
+	if err != nil {
+		return res, fmt.Errorf("[CreateUser] NewUser: %w", err)
+	}
+
 	user, err = userRepo.CreateUser(ctx, service.DB, user)
 	if err != nil {
 		return res, fmt.Errorf("[CreateUser] SaveUser: %w", err)
@@ -84,7 +89,11 @@ func (service *Service) CreateProduct(
 ) (res *connect.Response[commurzpbv1.Product], err error) {
 	productRepo := pkgproduct.ProductRepository{}
 
-	product := pkgproduct.CreateProduct(req.Msg.Name, pkgproduct.Price(req.Msg.Price))
+	product, err := pkgproduct.CreateProduct(req.Msg.Name, pkgprice.New(req.Msg.Price))
+	if err != nil {
+		return res, fmt.Errorf("[CreateProduct] CreateProduct: %w", err)
+	}
+
 	product, err = productRepo.SaveProduct(ctx, service.DB, product)
 	if err != nil {
 		return res, fmt.Errorf("[CreateProduct] CreateProduct: %w", err)

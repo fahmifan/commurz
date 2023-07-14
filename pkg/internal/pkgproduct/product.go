@@ -3,8 +3,10 @@ package pkgproduct
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
@@ -14,12 +16,10 @@ var (
 	ErrInsufficientStock = errors.New("insufficient stock")
 )
 
-type Price int64
-
 type Product struct {
 	ID    ulids.ULID
 	Name  string
-	Price Price
+	Price pkgprice.Price
 
 	Stocks []ProductStock
 }
@@ -28,16 +28,29 @@ func productFromSqlc(p sqlcs.Product, index int) Product {
 	return Product{
 		ID:    ulids.ULID{ULID: ulid.MustParse(p.ID)},
 		Name:  p.Name,
-		Price: Price(p.Price),
+		Price: pkgprice.New(p.Price),
 	}
 }
 
-func CreateProduct(name string, price Price) Product {
-	return Product{
+var MinProductPrice = pkgprice.New(10 * pkgprice.Divider)
+
+func CreateProduct(name string, price pkgprice.Price) (Product, error) {
+	minNameLen := 3
+	if len(name) < minNameLen {
+		return Product{}, fmt.Errorf("min name length is %d characters", minNameLen)
+	}
+
+	if price.Value() < MinProductPrice.Value() {
+		return Product{}, fmt.Errorf("min price is %s", MinProductPrice.String())
+	}
+
+	product := Product{
 		ID:    ulids.New(),
 		Name:  name,
 		Price: price,
 	}
+
+	return product, nil
 }
 
 func (product Product) AddStock(stockIn int64, createdAt time.Time) (Product, ProductStock) {

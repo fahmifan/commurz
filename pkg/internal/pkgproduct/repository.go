@@ -72,7 +72,7 @@ func (repo ProductRepository) SaveProduct(ctx context.Context, tx sqlcs.DBTX, pr
 	xproduct, err := queries.SaveProduct(ctx, sqlcs.SaveProductParams{
 		ID:    product.ID.String(),
 		Name:  product.Name,
-		Price: int64(product.Price),
+		Price: product.Price.Value(),
 	})
 	if err != nil {
 		return Product{}, fmt.Errorf("[Save] SaveProduct: %w", err)
@@ -87,7 +87,7 @@ func (repo ProductRepository) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, 
 	xproduct, err := query.UpdateProduct(ctx, sqlcs.UpdateProductParams{
 		ID:    product.ID.String(),
 		Name:  product.Name,
-		Price: int64(product.Price),
+		Price: product.Price.Value(),
 	})
 	if err != nil {
 		return Product{}, fmt.Errorf("[UpdateProduct] UpdateProduct: %w", err)

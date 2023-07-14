@@ -93,7 +93,7 @@ func (CartRepository) SaveCartItem(ctx context.Context, tx sqlcs.DBTX, cartItem 
 	xcartItem, err := query.SaveCartItem(ctx, sqlcs.SaveCartItemParams{
 		CartID:    cartItem.CartID.String(),
 		ID:        cartItem.ID.String(),
-		Price:     int64(cartItem.ProductPrice),
+		Price:     cartItem.ProductPrice.IDR(),
 		ProductID: cartItem.ProductID.String(),
 		Quantity:  cartItem.Quantity,
 	})

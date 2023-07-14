@@ -4,7 +4,7 @@ package commurz.v1;
 
 option go_package = "github.com/fahmifan/commurz/pkg/pb/commurz/v1;commurzv1";
 
-import "google/protobuf/timestamp.proto";
+// import "google/protobuf/timestamp.proto";
 
 // Resource definition
 message User {
@@ -17,6 +17,7 @@ message Product {
   string name = 2;
   int64 price = 3;
   int64 current_stock = 4;
+  string text_price_idr = 5; // price in text format, e.g. "Rp 10.000"
 }
 
 message OrderProduct {
@@ -84,9 +85,7 @@ message CheckoutAllRequest {
   string user_id = 1; // TODO: remove this, change to auth token/session
 }
 
-message ListUsersRequest {
-
-}
+message ListUsersRequest {}
 
 message ListUsersResponse {
   repeated User users = 1;
