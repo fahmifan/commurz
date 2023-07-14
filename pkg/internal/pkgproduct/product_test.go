@@ -11,7 +11,7 @@ import (
 
 func TestCreateProduct(t *testing.T) {
 	now := time.Now()
-	price := pkgprice.New(10 * pkgprice.Divider)
+	price := pkgprice.New(100)
 
 	t.Run("able to add & reduce stock", func(t *testing.T) {
 		product, err := pkgproduct.CreateProduct("product 1", price)

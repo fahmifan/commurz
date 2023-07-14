@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	ErrNotFound          = errors.New("not found")
 	ErrCartIsFull        = errors.New("cart is full")
 	ErrInvalidQuantity   = errors.New("invalid quantity")
 	ErrOutOfStock        = errors.New("out of stock")
@@ -119,31 +120,23 @@ func (cart Cart) AddItem(product products.Product, qty int64) (Cart, CartItem, e
 	return cart, cartItem, nil
 }
 
-func (c Cart) LastItem() CartItem {
-	if len(c.Items) == 0 {
-		return CartItem{}
+func (cart Cart) RemoveItem(id ulids.ULID) (Cart, CartItem, error) {
+	if len(cart.Items) == 0 {
+		return cart, CartItem{}, ErrNotFound
 	}
 
-	return c.Items[len(c.Items)-1]
-}
-
-func (c Cart) RemoveItem(id ulids.ULID) Cart {
-	if len(c.Items) == 0 {
-		return c
+	removedItem, found := lo.Find(cart.Items, func(item CartItem) bool {
+		return item.ID == id
+	})
+	if !found {
+		return cart, CartItem{}, ErrNotFound
 	}
 
-	items := make([]CartItem, 0, len(c.Items)-1)
-	for _, item := range c.Items {
-		if item.ID == id {
-			continue
-		}
+	cart.Items = lo.Filter(cart.Items, func(item CartItem, _ int) bool {
+		return item.ID != id
+	})
 
-		items = append(items, item)
-	}
-
-	c.Items = items
-
-	return c
+	return cart, removedItem, nil
 }
 
 func (cart Cart) getOrderItems() []OrderItem {

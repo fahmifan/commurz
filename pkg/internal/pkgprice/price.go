@@ -14,35 +14,22 @@ const (
 )
 
 // Divider is the default divider of Price.
-const Divider int64 = 100_000
+var Divider int64 = 100_000
 
 // Price is in  IDR 1/divider.
 //
 // So, a Price(1_000_000) with divider(1000) is equal to 1_000 in IDR
 type Price struct {
-	value   int64
-	divider int64
+	value int64
 }
 
-func New(value int64, opts ...Option) Price {
+// New create a new Price with default Divider of 100_000.
+func New(value int64) Price {
 	price := Price{
-		value:   value,
-		divider: Divider,
-	}
-
-	for _, opt := range opts {
-		opt(&price)
+		value: value,
 	}
 
 	return price
-}
-
-type Option func(*Price)
-
-func WithDivider(divider int64) Option {
-	return func(price *Price) {
-		price.divider = divider
-	}
 }
 
 func (price Price) Value() int64 {
@@ -51,15 +38,12 @@ func (price Price) Value() int64 {
 
 // IDR return the integer value.
 func (price Price) IDR() int64 {
-	if price.divider == 0 {
-		return price.value
-	}
-	return price.value / price.divider
+	return price.value / Divider
 }
 
 // IDRCent return the decimal value of IDR.
 func (price Price) IDRCent() int64 {
-	return price.value % price.divider
+	return price.value % Divider
 }
 
 func (price Price) Times(times int64) Price {

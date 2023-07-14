@@ -32,22 +32,22 @@ func productFromSqlc(p sqlcs.Product, index int) Product {
 	}
 }
 
-var MinProductPrice = pkgprice.New(10 * pkgprice.Divider)
+var minPrice = pkgprice.New(10)
 
-func CreateProduct(name string, price pkgprice.Price) (Product, error) {
+func CreateProduct(name string, productPrice pkgprice.Price) (Product, error) {
 	minNameLen := 3
 	if len(name) < minNameLen {
 		return Product{}, fmt.Errorf("min name length is %d characters", minNameLen)
 	}
 
-	if price.Value() < MinProductPrice.Value() {
-		return Product{}, fmt.Errorf("min price is %s", MinProductPrice.String())
+	if productPrice.Value() < minPrice.Value() {
+		return Product{}, fmt.Errorf("min price is %s", minPrice.String())
 	}
 
 	product := Product{
 		ID:    ulids.New(),
 		Name:  name,
-		Price: price,
+		Price: productPrice,
 	}
 
 	return product, nil
