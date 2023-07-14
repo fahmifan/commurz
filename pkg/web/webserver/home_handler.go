@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
-	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
+	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/labstack/echo/v4"
 )
 

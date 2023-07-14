@@ -14,9 +14,9 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
+	"github.com/fahmifan/commurz/pkg/pb/commurz/v1/commurzv1connect"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
-	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
-	"github.com/fahmifan/commurz/protogen/commurzpb/v1/commurzpbv1connect"
 	"github.com/fahmifan/ulids"
 )
 
@@ -24,7 +24,7 @@ type Config struct {
 	DB *sql.DB
 }
 
-var _ commurzpbv1connect.CommurzServiceHandler = &Service{}
+var _ commurzv1connect.CommurzServiceHandler = &Service{}
 
 type Service struct {
 	*Config

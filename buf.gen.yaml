@@ -1,8 +1,8 @@
 version: v1
 plugins:
   - plugin: go
-    out: protogen
+    out: pkg/pb
     opt: paths=source_relative
   - plugin: connect-go
-    out: protogen
+    out: pkg/pb
     opt: paths=source_relative

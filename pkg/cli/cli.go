@@ -7,8 +7,8 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
+	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service"
-	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
 	_ "modernc.org/sqlite"
 )
 

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package commurzpb.v1;
+package commurz.v1;
 
-option go_package = "github.com/fahmifan/commurz/protogen/commurzpb/v1;commurzpbv1";
+option go_package = "github.com/fahmifan/commurz/pkg/pb/commurz/v1;commurzv1";
 
 import "google/protobuf/timestamp.proto";
 
@@ -69,12 +69,12 @@ message CreateProductRequest {
 }
 
 message ChangeProductStockRequest {
-  string productId = 1;
+  string product_id = 1;
   int64 stock_quantity = 2;
 }
 
 message AddItemToCartRequest {
-  string productId = 1;
+  string product_id = 1;
   int64 quantity = 2;
   
   string user_id = 3; // TODO: remove this, change to auth token/session

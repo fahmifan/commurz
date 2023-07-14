@@ -4,7 +4,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
-	commurzpbv1 "github.com/fahmifan/commurz/protogen/commurzpb/v1"
+	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/samber/lo"
 )
 
