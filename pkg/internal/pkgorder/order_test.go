@@ -67,4 +67,52 @@ func TestCart_RemoveItem(t *testing.T) {
 		require.Equal(t, 0, len(cart.Items))
 		require.Equal(t, item.ID.String(), removedItem.ID.String())
 	})
+
+	t.Run("cart is empty, should not found", func(t *testing.T) {
+		cart := pkgorder.NewCart(ulids.New())
+
+		_, _, err := cart.RemoveItem(ulids.New())
+		require.ErrorAs(t, err, &pkgorder.ErrNotFound)
+	})
+
+	t.Run("wrong id, should not found", func(t *testing.T) {
+		cart := pkgorder.NewCart(ulids.New())
+		now := time.Now()
+
+		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
+		require.NoError(t, err)
+
+		prod1, _ = prod1.AddStock(10, now)
+		require.Equal(t, int64(10), prod1.CurrentStock())
+
+		cart, _, err = cart.AddItem(prod1, 1)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(cart.Items))
+
+		_, _, err = cart.RemoveItem(ulids.New())
+		require.ErrorAs(t, err, &pkgorder.ErrNotFound)
+	})
+}
+
+func TestCart_CheckoutAll(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		cart := pkgorder.NewCart(ulids.New())
+		now := time.Now()
+
+		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
+		require.NoError(t, err)
+
+		prod1, _ = prod1.AddStock(10, now)
+		require.Equal(t, int64(10), prod1.CurrentStock())
+
+		cart, _, err = cart.AddItem(prod1, 1)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(cart.Items))
+
+		newOrderNumber := pkgorder.OrderNumber("order-123")
+		cart, order, checkedOutStocks, err := cart.CheckoutAll(newOrderNumber, now)
+		require.NoError(t, err)
+		require.Equal(t, prod1.ID, checkedOutStocks[0].ProductID)
+		require.Equal(t, pkgprice.New(1_000), order.TotalPrice())
+	})
 }

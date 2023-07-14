@@ -3,13 +3,16 @@ package pkgorder
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
+	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	products "github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
+	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
-	"github.com/oklog/ulid/v2"
 	"github.com/samber/lo"
 )
 
@@ -19,6 +22,7 @@ var (
 	ErrInvalidQuantity   = errors.New("invalid quantity")
 	ErrOutOfStock        = errors.New("out of stock")
 	ErrInsufficientStock = errors.New("insufficient stock")
+	ErrTooManyItems      = errors.New("too many items")
 )
 
 type Cart struct {
@@ -31,8 +35,8 @@ type Cart struct {
 
 func cartFromSqlc(xcart sqlcs.Cart) Cart {
 	return Cart{
-		ID:     mustParseULID(xcart.ID),
-		UserID: mustParseULID(xcart.UserID),
+		ID:     pkgutil.WeakParseULID(xcart.ID),
+		UserID: pkgutil.WeakParseULID(xcart.UserID),
 	}
 }
 
@@ -43,19 +47,30 @@ func NewCart(userID ulids.ULID) Cart {
 	}
 }
 
-func (cart Cart) CheckoutAll(orderNumber OrderNumber) (Order, error) {
-	if !cart.isAllItemsHaveStocks() {
-		return Order{}, ErrOutOfStock
+const maxCheckedOutItems = 10
+
+func (cart Cart) CheckoutAll(newOrderNumber OrderNumber, now time.Time) (_ Cart, order Order, checkedoutStocks []pkgproduct.ProductStock, err error) {
+	if len(cart.Items) > maxCheckedOutItems {
+		return Cart{}, Order{}, nil, fmt.Errorf("[CheckoutAll] too many items: %w", ErrTooManyItems)
 	}
 
-	order := Order{
+	if !cart.isAllItemsHaveStocks() {
+		return Cart{}, Order{}, nil, fmt.Errorf("[CheckoutAll] out of stock: %w", ErrOutOfStock)
+	}
+
+	cart, items, checkedoutStocks, err := cart.makeOrderItems(now)
+	if err != nil {
+		return Cart{}, Order{}, nil, fmt.Errorf("[CheckoutAll] make order items: %w", err)
+	}
+
+	order = Order{
 		ID:     ulids.New(),
 		UserID: cart.UserID,
-		Number: orderNumber,
-		Items:  cart.getOrderItems(),
+		Number: newOrderNumber,
+		Items:  items,
 	}
 
-	return order, nil
+	return cart, order, checkedoutStocks, nil
 }
 
 func (cart Cart) isAllItemsHaveStocks() bool {
@@ -64,36 +79,9 @@ func (cart Cart) isAllItemsHaveStocks() bool {
 	})
 }
 
-// CheckoutByProducts will checkout only the given products
-func (cart Cart) CheckoutByProducts(products []products.Product, orderNumber OrderNumber) Order {
-	// check products stock
-
-	items := lo.Filter(
-		cart.getOrderItems(),
-		cart.filterOrderItemsByProduct(products),
-	)
-
-	return Order{
-		ID:     ulids.New(),
-		Number: orderNumber,
-		Items:  items,
-	}
-}
-
-func (cart Cart) filterOrderItemsByProduct(allProducts []products.Product) func(item OrderItem, index int) bool {
-	mapProduct := make(map[ulids.ULID]products.Product, len(allProducts))
-	for _, product := range allProducts {
-		mapProduct[product.ID] = product
-	}
-
-	return func(item OrderItem, index int) bool {
-		_, ok := mapProduct[item.Product.ID]
-		return ok
-	}
-}
+const maxCartItems = 99
 
 func (cart Cart) AddItem(product products.Product, qty int64) (Cart, CartItem, error) {
-	const maxCartItems = 99
 
 	if len(cart.Items) >= maxCartItems {
 		return Cart{}, CartItem{}, ErrCartIsFull
@@ -139,24 +127,34 @@ func (cart Cart) RemoveItem(id ulids.ULID) (Cart, CartItem, error) {
 	return cart, removedItem, nil
 }
 
-func (cart Cart) getOrderItems() []OrderItem {
+func (cart Cart) makeOrderItems(now time.Time) (_ Cart, items []OrderItem, checkoutStocks []pkgproduct.ProductStock, err error) {
 	orderID := ulids.New()
 
-	items := make([]OrderItem, len(cart.Items))
+	checkoutStocks = make([]pkgproduct.ProductStock, len(cart.Items))
+	for i := range cart.Items {
+		products, reduceStock, err := cart.Items[i].Product.ReduceStock(cart.Items[i].Quantity, now)
+		if err != nil {
+			return Cart{}, nil, nil, fmt.Errorf("[makeOrderItems] reduce product stock: %w", err)
+		}
+
+		checkoutStocks[i] = reduceStock
+		cart.Items[i].Product = products
+	}
+
+	items = make([]OrderItem, len(cart.Items))
 	for i := range cart.Items {
 		cartItem := cart.Items[i]
 
 		items[i] = OrderItem{
-			ID:         ulids.New(),
-			OrderID:    orderID,
-			CartItemID: cartItem.ID,
-			Product:    cartItem.Product,
-			Price:      cartItem.ProductPrice,
-			Quantity:   cartItem.Quantity,
+			ID:       ulids.New(),
+			OrderID:  orderID,
+			Product:  cartItem.Product,
+			Price:    cartItem.ProductPrice,
+			Quantity: cartItem.Quantity,
 		}
 	}
 
-	return items
+	return cart, items, checkoutStocks, nil
 }
 
 type CartItem struct {
@@ -172,9 +170,9 @@ type CartItem struct {
 
 func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
 	return CartItem{
-		ID:           mustParseULID(xcartItem.ID),
-		CartID:       mustParseULID(xcartItem.CartID),
-		ProductID:    mustParseULID(xcartItem.ProductID),
+		ID:           pkgutil.WeakParseULID(xcartItem.ID),
+		CartID:       pkgutil.WeakParseULID(xcartItem.CartID),
+		ProductID:    pkgutil.WeakParseULID(xcartItem.ProductID),
 		Quantity:     xcartItem.Quantity,
 		ProductPrice: pkgprice.New(xcartItem.Price),
 	}
@@ -192,8 +190,8 @@ type Order struct {
 
 func orderFromSqlc(xorder sqlcs.Order) Order {
 	return Order{
-		ID:     mustParseULID(xorder.ID),
-		UserID: mustParseULID(xorder.UserID),
+		ID:     pkgutil.WeakParseULID(xorder.ID),
+		UserID: pkgutil.WeakParseULID(xorder.UserID),
 		Number: OrderNumber(xorder.Number),
 	}
 }
@@ -207,21 +205,32 @@ func (order Order) TotalPrice() pkgprice.Price {
 	return totalPrice
 }
 
-type OrderItem struct {
-	ID         ulids.ULID
-	OrderID    ulids.ULID
-	CartItemID ulids.ULID
-	Product    products.Product
-	Price      pkgprice.Price
-	Quantity   int64
-}
-
-func mustParseULID(s string) ulids.ULID {
-	return ulids.ULID{ULID: ulid.MustParse(s)}
-}
-
-func stringULIDs(ids []ulids.ULID) []string {
-	return lo.Map(ids, func(id ulids.ULID, index int) string {
-		return id.String()
+func (order Order) Products() []products.Product {
+	products := lo.Map(order.Items, func(item OrderItem, index int) products.Product {
+		return item.Product
 	})
+
+	return lo.UniqBy(products, func(product pkgproduct.Product) ulids.ULID {
+		return product.ID
+	})
+}
+
+type OrderItem struct {
+	ID        ulids.ULID
+	OrderID   ulids.ULID
+	ProductID ulids.ULID
+	Price     pkgprice.Price
+	Quantity  int64
+
+	Product products.Product
+}
+
+func orderItemFromSqlc(xorderItem sqlcs.OrderItem, idx int) OrderItem {
+	return OrderItem{
+		ID:        pkgutil.WeakParseULID(xorderItem.ID),
+		OrderID:   pkgutil.WeakParseULID(xorderItem.OrderID),
+		Price:     pkgprice.New(xorderItem.Price),
+		Quantity:  xorderItem.Quantity,
+		ProductID: pkgutil.WeakParseULID(xorderItem.ProductID),
+	}
 }

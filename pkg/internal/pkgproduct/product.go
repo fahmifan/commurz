@@ -17,9 +17,10 @@ var (
 )
 
 type Product struct {
-	ID    ulids.ULID
-	Name  string
-	Price pkgprice.Price
+	ID      ulids.ULID
+	Name    string
+	Price   pkgprice.Price
+	Version int64
 
 	Stocks []ProductStock
 }

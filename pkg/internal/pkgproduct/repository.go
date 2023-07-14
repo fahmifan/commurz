@@ -11,16 +11,16 @@ import (
 	"github.com/samber/lo"
 )
 
-type ProductRepository struct{}
+type ProductReader struct{}
 
-func (ProductRepository) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id ulids.ULID) (Product, error) {
+func (ProductReader) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id ulids.ULID) (Product, error) {
 	queries := sqlcs.New(tx)
 	sqlcProduct, err := queries.FindProductByID(ctx, id.String())
 	if err != nil {
 		return Product{}, fmt.Errorf("[FindProductByID] FindProductByID: %w", err)
 	}
 
-	productStocks, err := ProductRepository{}.FindAllProductStocksByIDs(ctx, tx, []ulids.ULID{id})
+	productStocks, err := ProductReader{}.FindAllProductStocksByIDs(ctx, tx, []ulids.ULID{id})
 	if err != nil {
 		return Product{}, fmt.Errorf("[FindProductByID] FindAllProductStocksByIDs: %w", err)
 	}
@@ -31,7 +31,7 @@ func (ProductRepository) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id 
 	return product, nil
 }
 
-func (repo ProductRepository) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]Product, error) {
+func (repo ProductReader) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]Product, error) {
 	query := sqlcs.New(tx)
 
 	xproducts, err := query.FindAllProductsByIDs(ctx, pkgutil.StringULIDs(productIDs))
@@ -55,7 +55,7 @@ func (repo ProductRepository) FindProductsByIDs(ctx context.Context, tx sqlcs.DB
 	return products, nil
 }
 
-func (ProductRepository) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]ProductStock, error) {
+func (ProductReader) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]ProductStock, error) {
 	queries := sqlcs.New(tx)
 
 	xstocks, err := queries.FindAllProductStocksByIDs(ctx, pkgutil.StringULIDs(productIDs))
@@ -66,7 +66,9 @@ func (ProductRepository) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs
 	return lo.Map(xstocks, productStockFromSqlc), nil
 }
 
-func (repo ProductRepository) SaveProduct(ctx context.Context, tx sqlcs.DBTX, product Product) (Product, error) {
+type ProductWriter struct{}
+
+func (repo ProductWriter) SaveProduct(ctx context.Context, tx sqlcs.DBTX, product Product) (Product, error) {
 	queries := sqlcs.New(tx)
 
 	xproduct, err := queries.SaveProduct(ctx, sqlcs.SaveProductParams{
@@ -81,7 +83,7 @@ func (repo ProductRepository) SaveProduct(ctx context.Context, tx sqlcs.DBTX, pr
 	return productFromSqlc(xproduct, 0), nil
 }
 
-func (repo ProductRepository) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, product Product) (Product, error) {
+func (repo ProductWriter) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, product Product) (Product, error) {
 	query := sqlcs.New(tx)
 
 	xproduct, err := query.UpdateProduct(ctx, sqlcs.UpdateProductParams{
@@ -96,7 +98,7 @@ func (repo ProductRepository) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, 
 	return productFromSqlc(xproduct, 0), nil
 }
 
-func (repo ProductRepository) SaveProductStock(ctx context.Context, tx sqlcs.DBTX, stock ProductStock) (ProductStock, error) {
+func (repo ProductWriter) SaveProductStock(ctx context.Context, tx sqlcs.DBTX, stock ProductStock) (ProductStock, error) {
 	query := sqlcs.New(tx)
 
 	xstock, err := query.CreateProductStock(ctx, sqlcs.CreateProductStockParams{
@@ -110,4 +112,48 @@ func (repo ProductRepository) SaveProductStock(ctx context.Context, tx sqlcs.DBT
 	}
 
 	return productStockFromSqlc(xstock, 0), nil
+}
+
+func (repo ProductWriter) BumpProductVersion(ctx context.Context, tx sqlcs.DBTX, product Product) (Product, error) {
+	query := sqlcs.New(tx)
+
+	updated, err := query.BumpProductVersion(ctx, sqlcs.BumpProductVersionParams{
+		ID:             product.ID.String(),
+		CurrentVersion: product.Version,
+	})
+	if err != nil {
+		return Product{}, fmt.Errorf("[IncreaseVersion] IncreaseProductVersion: %w", err)
+	}
+
+	product.Version = updated.Version
+
+	return product, nil
+}
+
+func (repo ProductWriter) BulkBumpProductVersion(ctx context.Context, tx sqlcs.DBTX, products []Product) ([]Product, error) {
+	updatedProducts := make([]Product, len(products))
+	for i := range products {
+		updatedProduct, err := repo.BumpProductVersion(ctx, tx, products[i])
+		if err != nil {
+			return nil, fmt.Errorf("[BulkBumpProductVersion] BumpProductVersion: %w", err)
+		}
+
+		updatedProducts[i] = updatedProduct
+	}
+
+	return updatedProducts, nil
+}
+
+func (repo ProductWriter) BulkSaveProductStocks(ctx context.Context, tx sqlcs.DBTX, stocks []ProductStock) ([]ProductStock, error) {
+	savedStocks := make([]ProductStock, len(stocks))
+	for i := range stocks {
+		savedStock, err := repo.SaveProductStock(ctx, tx, stocks[i])
+		if err != nil {
+			return nil, fmt.Errorf("[BulkSaveProductStocks] SaveProductStock: %w", err)
+		}
+
+		savedStocks[i] = savedStock
+	}
+
+	return savedStocks, nil
 }

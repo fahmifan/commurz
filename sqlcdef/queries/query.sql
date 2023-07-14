@@ -21,16 +21,6 @@ INSERT INTO cart_items (id, cart_id, product_id, quantity, price)
 VALUES (@id, @cart_id, @product_id, @quantity, @price)
 RETURNING *;
 
--- name: SaveOrder :one
-INSERT INTO orders (id, user_id, number)
-VALUES (@id, @user_id, @number)
-RETURNING *;
-
--- name: SaveOrderItems :one
-INSERT INTO order_items (id, order_id, product_id, quantity, price)
-VALUES (@id, @order_id, @product_id, @quantity, @price)
-RETURNING *;
-
 -- name: SaveProduct :one
 INSERT INTO products (id, name, price)
 VALUES (@id, @name, @price)
@@ -42,6 +32,11 @@ UPDATE products SET
     price = @price 
 WHERE 
     id = @id 
+RETURNING *;
+
+-- name: BumpProductVersion :one
+UPDATE products SET version = version + 1 
+WHERE id = @id AND version = @current_version
 RETURNING *;
 
 -- name: CreateProductStock :one

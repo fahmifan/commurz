@@ -2,7 +2,7 @@ version: 2
 sql:
   - engine: "sqlite"
     schema: "sqlcdef/schema.sql"
-    queries: "sqlcdef/query.sql"
+    queries: "sqlcdef/queries"
     gen:
       go:
         package: "sqlcs"

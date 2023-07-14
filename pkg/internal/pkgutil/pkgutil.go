@@ -25,6 +25,14 @@ func MustParseULID(s string) ulids.ULID {
 	return ulids.ULID{ULID: ulid.MustParse(s)}
 }
 
+func WeakParseULID(s string) ulids.ULID {
+	id, err := ulid.Parse(s)
+	if err != nil {
+		return ulids.ULID{}
+	}
+	return ulids.ULID{ULID: id}
+}
+
 func ParseULID(in string) (ulids.ULID, error) {
 	id, err := ulid.Parse(in)
 	if err != nil {

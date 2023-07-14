@@ -10,6 +10,29 @@ import (
 	"strings"
 )
 
+const bumpProductVersion = `-- name: BumpProductVersion :one
+UPDATE products SET version = version + 1 
+WHERE id = ?1 AND version = ?2
+RETURNING id, name, price, version
+`
+
+type BumpProductVersionParams struct {
+	ID             string
+	CurrentVersion int64
+}
+
+func (q *Queries) BumpProductVersion(ctx context.Context, arg BumpProductVersionParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, bumpProductVersion, arg.ID, arg.CurrentVersion)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+	)
+	return i, err
+}
+
 const createCart = `-- name: CreateCart :one
 INSERT INTO carts (id, user_id)
 VALUES (?1, ?2)
@@ -173,7 +196,7 @@ func (q *Queries) FindAllProductStocksByIDs(ctx context.Context, productIds []st
 }
 
 const findAllProductsByIDs = `-- name: FindAllProductsByIDs :many
-SELECT id, name, price FROM products WHERE id IN (/*SLICE:product_ids*/?)
+SELECT id, name, price, version FROM products WHERE id IN (/*SLICE:product_ids*/?)
 `
 
 func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
@@ -195,7 +218,12 @@ func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string)
 	var items []Product
 	for rows.Next() {
 		var i Product
-		if err := rows.Scan(&i.ID, &i.Name, &i.Price); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Price,
+			&i.Version,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -248,13 +276,18 @@ func (q *Queries) FindCartByUserID(ctx context.Context, userID string) (Cart, er
 }
 
 const findProductByID = `-- name: FindProductByID :one
-SELECT id, name, price FROM products WHERE id = ?
+SELECT id, name, price, version FROM products WHERE id = ?
 `
 
 func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, error) {
 	row := q.db.QueryRowContext(ctx, findProductByID, id)
 	var i Product
-	err := row.Scan(&i.ID, &i.Name, &i.Price)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+	)
 	return i, err
 }
 
@@ -302,62 +335,10 @@ func (q *Queries) SaveCartItem(ctx context.Context, arg SaveCartItemParams) (Car
 	return i, err
 }
 
-const saveOrder = `-- name: SaveOrder :one
-INSERT INTO orders (id, user_id, number)
-VALUES (?1, ?2, ?3)
-RETURNING id, user_id, number
-`
-
-type SaveOrderParams struct {
-	ID     string
-	UserID string
-	Number string
-}
-
-func (q *Queries) SaveOrder(ctx context.Context, arg SaveOrderParams) (Order, error) {
-	row := q.db.QueryRowContext(ctx, saveOrder, arg.ID, arg.UserID, arg.Number)
-	var i Order
-	err := row.Scan(&i.ID, &i.UserID, &i.Number)
-	return i, err
-}
-
-const saveOrderItems = `-- name: SaveOrderItems :one
-INSERT INTO order_items (id, order_id, product_id, quantity, price)
-VALUES (?1, ?2, ?3, ?4, ?5)
-RETURNING id, order_id, product_id, quantity, price
-`
-
-type SaveOrderItemsParams struct {
-	ID        string
-	OrderID   string
-	ProductID string
-	Quantity  int64
-	Price     int64
-}
-
-func (q *Queries) SaveOrderItems(ctx context.Context, arg SaveOrderItemsParams) (OrderItem, error) {
-	row := q.db.QueryRowContext(ctx, saveOrderItems,
-		arg.ID,
-		arg.OrderID,
-		arg.ProductID,
-		arg.Quantity,
-		arg.Price,
-	)
-	var i OrderItem
-	err := row.Scan(
-		&i.ID,
-		&i.OrderID,
-		&i.ProductID,
-		&i.Quantity,
-		&i.Price,
-	)
-	return i, err
-}
-
 const saveProduct = `-- name: SaveProduct :one
 INSERT INTO products (id, name, price)
 VALUES (?1, ?2, ?3)
-RETURNING id, name, price
+RETURNING id, name, price, version
 `
 
 type SaveProductParams struct {
@@ -369,7 +350,12 @@ type SaveProductParams struct {
 func (q *Queries) SaveProduct(ctx context.Context, arg SaveProductParams) (Product, error) {
 	row := q.db.QueryRowContext(ctx, saveProduct, arg.ID, arg.Name, arg.Price)
 	var i Product
-	err := row.Scan(&i.ID, &i.Name, &i.Price)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+	)
 	return i, err
 }
 
@@ -379,7 +365,7 @@ UPDATE products SET
     price = ?2 
 WHERE 
     id = ?3 
-RETURNING id, name, price
+RETURNING id, name, price, version
 `
 
 type UpdateProductParams struct {
@@ -391,6 +377,11 @@ type UpdateProductParams struct {
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
 	row := q.db.QueryRowContext(ctx, updateProduct, arg.Name, arg.Price, arg.ID)
 	var i Product
-	err := row.Scan(&i.ID, &i.Name, &i.Price)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+	)
 	return i, err
 }
