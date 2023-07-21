@@ -72,9 +72,9 @@ func EchoRequestLogger(debug bool) func(c echo.Context, v middleware.RequestLogg
 
 		switch {
 		case statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError:
-			logger.WithLevel(zerolog.WarnLevel).Msg(msg)
-		case statusCode >= http.StatusInternalServerError:
 			logger.WithLevel(zerolog.ErrorLevel).Msg(msg)
+		case statusCode >= http.StatusInternalServerError:
+			logger.WithLevel(zerolog.FatalLevel).Msg(msg)
 		default:
 			logger.WithLevel(zerolog.InfoLevel).Msg(msg)
 		}
