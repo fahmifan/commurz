@@ -6,9 +6,11 @@ import (
 	"io"
 	"path"
 
+	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/service"
 	"github.com/flosch/pongo2/v6"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Webserver struct {
@@ -26,7 +28,21 @@ func NewWebserver(service *service.Service, port int) *Webserver {
 
 func (server *Webserver) Run() error {
 	server.echo = echo.New()
-	server.echo.Renderer = &renderer{rootDir: "pkg/web/templates"}
+
+	server.echo.Use(
+		middleware.RemoveTrailingSlash(),
+		logs.EchoRequestID(),
+		middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+			LogValuesFunc: logs.EchoRequestLogger(true),
+			LogLatency:    true,
+			LogRemoteIP:   true,
+			LogUserAgent:  true,
+			LogError:      true,
+			HandleError:   true,
+		}),
+	)
+
+	server.echo.Renderer = &htmlRenderer{rootDir: "pkg/web/templates"}
 
 	homeHandler := HomeHandler{server}
 	userHandler := UserHandler{server}
@@ -49,16 +65,19 @@ func (server *Webserver) Stop(ctx context.Context) error {
 	return server.echo.Shutdown(ctx)
 }
 
-type renderer struct {
+type htmlRenderer struct {
 	rootDir string
 }
 
-func (r *renderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (r *htmlRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	tpl, err := pongo2.FromFile(path.Join(r.rootDir, name))
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return err
 	}
+
+	// reqID := logs.GetRequestID(c.Request().Context())
+	// c.Response().Header().Set(logs.RequestIDHeaderKey, reqID)
 
 	return tpl.ExecuteWriter(pongo2.Context{"data": data}, w)
 }

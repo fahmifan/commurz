@@ -9,6 +9,8 @@ require (
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/oklog/ulid/v2 v2.0.2
+	github.com/rs/xid v1.5.0
+	github.com/rs/zerolog v1.29.1
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/text v0.7.0
@@ -19,6 +21,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
@@ -35,6 +38,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
