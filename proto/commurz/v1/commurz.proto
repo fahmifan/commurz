@@ -74,7 +74,7 @@ message ChangeProductStockRequest {
   int64 stock_quantity = 2;
 }
 
-message AddItemToCartRequest {
+message AddProductToCartRequest {
   string product_id = 1;
   int64 quantity = 2;
   
@@ -103,6 +103,6 @@ service CommurzService {
   rpc ReduceProductStock(ChangeProductStockRequest) returns (Product) {}
 
   // cart
-  rpc AddItemToCart(AddItemToCartRequest) returns (Cart) {}
+  rpc AddProductToCart(AddProductToCartRequest) returns (Cart) {}
   rpc CheckoutAll(CheckoutAllRequest) returns (Order) {}
 }

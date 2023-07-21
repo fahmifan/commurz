@@ -108,7 +108,7 @@ func (repo ProductWriter) SaveProductStock(ctx context.Context, tx sqlcs.DBTX, s
 		StockOut:  int64(stock.StockOut),
 	})
 	if err != nil {
-		return ProductStock{}, fmt.Errorf("[AddProductStock] CreateProductStock: %w", err)
+		return ProductStock{}, fmt.Errorf("[SaveProductStock] CreateProductStock: %w", err)
 	}
 
 	return productStockFromSqlc(xstock, 0), nil
@@ -122,7 +122,7 @@ func (repo ProductWriter) BumpProductVersion(ctx context.Context, tx sqlcs.DBTX,
 		CurrentVersion: product.Version,
 	})
 	if err != nil {
-		return Product{}, fmt.Errorf("[IncreaseVersion] IncreaseProductVersion: %w", err)
+		return Product{}, fmt.Errorf("[BumpProductVersion] BumpProductVersion: %w", err)
 	}
 
 	product.Version = updated.Version

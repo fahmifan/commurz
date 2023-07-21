@@ -48,9 +48,9 @@ const (
 	// CommurzServiceReduceProductStockProcedure is the fully-qualified name of the CommurzService's
 	// ReduceProductStock RPC.
 	CommurzServiceReduceProductStockProcedure = "/commurz.v1.CommurzService/ReduceProductStock"
-	// CommurzServiceAddItemToCartProcedure is the fully-qualified name of the CommurzService's
-	// AddItemToCart RPC.
-	CommurzServiceAddItemToCartProcedure = "/commurz.v1.CommurzService/AddItemToCart"
+	// CommurzServiceAddProductToCartProcedure is the fully-qualified name of the CommurzService's
+	// AddProductToCart RPC.
+	CommurzServiceAddProductToCartProcedure = "/commurz.v1.CommurzService/AddProductToCart"
 	// CommurzServiceCheckoutAllProcedure is the fully-qualified name of the CommurzService's
 	// CheckoutAll RPC.
 	CommurzServiceCheckoutAllProcedure = "/commurz.v1.CommurzService/CheckoutAll"
@@ -66,7 +66,7 @@ type CommurzServiceClient interface {
 	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	// cart
-	AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error)
+	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error)
 	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
 }
 
@@ -105,9 +105,9 @@ func NewCommurzServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+CommurzServiceReduceProductStockProcedure,
 			opts...,
 		),
-		addItemToCart: connect_go.NewClient[v1.AddItemToCartRequest, v1.Cart](
+		addProductToCart: connect_go.NewClient[v1.AddProductToCartRequest, v1.Cart](
 			httpClient,
-			baseURL+CommurzServiceAddItemToCartProcedure,
+			baseURL+CommurzServiceAddProductToCartProcedure,
 			opts...,
 		),
 		checkoutAll: connect_go.NewClient[v1.CheckoutAllRequest, v1.Order](
@@ -125,7 +125,7 @@ type commurzServiceClient struct {
 	createProduct      *connect_go.Client[v1.CreateProductRequest, v1.Product]
 	addProductStock    *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
 	reduceProductStock *connect_go.Client[v1.ChangeProductStockRequest, v1.Product]
-	addItemToCart      *connect_go.Client[v1.AddItemToCartRequest, v1.Cart]
+	addProductToCart   *connect_go.Client[v1.AddProductToCartRequest, v1.Cart]
 	checkoutAll        *connect_go.Client[v1.CheckoutAllRequest, v1.Order]
 }
 
@@ -154,9 +154,9 @@ func (c *commurzServiceClient) ReduceProductStock(ctx context.Context, req *conn
 	return c.reduceProductStock.CallUnary(ctx, req)
 }
 
-// AddItemToCart calls commurz.v1.CommurzService.AddItemToCart.
-func (c *commurzServiceClient) AddItemToCart(ctx context.Context, req *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error) {
-	return c.addItemToCart.CallUnary(ctx, req)
+// AddProductToCart calls commurz.v1.CommurzService.AddProductToCart.
+func (c *commurzServiceClient) AddProductToCart(ctx context.Context, req *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+	return c.addProductToCart.CallUnary(ctx, req)
 }
 
 // CheckoutAll calls commurz.v1.CommurzService.CheckoutAll.
@@ -174,7 +174,7 @@ type CommurzServiceHandler interface {
 	AddProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	ReduceProductStock(context.Context, *connect_go.Request[v1.ChangeProductStockRequest]) (*connect_go.Response[v1.Product], error)
 	// cart
-	AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error)
+	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error)
 	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
 }
 
@@ -209,9 +209,9 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 		svc.ReduceProductStock,
 		opts...,
 	)
-	commurzServiceAddItemToCartHandler := connect_go.NewUnaryHandler(
-		CommurzServiceAddItemToCartProcedure,
-		svc.AddItemToCart,
+	commurzServiceAddProductToCartHandler := connect_go.NewUnaryHandler(
+		CommurzServiceAddProductToCartProcedure,
+		svc.AddProductToCart,
 		opts...,
 	)
 	commurzServiceCheckoutAllHandler := connect_go.NewUnaryHandler(
@@ -231,8 +231,8 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 			commurzServiceAddProductStockHandler.ServeHTTP(w, r)
 		case CommurzServiceReduceProductStockProcedure:
 			commurzServiceReduceProductStockHandler.ServeHTTP(w, r)
-		case CommurzServiceAddItemToCartProcedure:
-			commurzServiceAddItemToCartHandler.ServeHTTP(w, r)
+		case CommurzServiceAddProductToCartProcedure:
+			commurzServiceAddProductToCartHandler.ServeHTTP(w, r)
 		case CommurzServiceCheckoutAllProcedure:
 			commurzServiceCheckoutAllHandler.ServeHTTP(w, r)
 		default:
@@ -264,8 +264,8 @@ func (UnimplementedCommurzServiceHandler) ReduceProductStock(context.Context, *c
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.ReduceProductStock is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) AddItemToCart(context.Context, *connect_go.Request[v1.AddItemToCartRequest]) (*connect_go.Response[v1.Cart], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.AddItemToCart is not implemented"))
+func (UnimplementedCommurzServiceHandler) AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.AddProductToCart is not implemented"))
 }
 
 func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error) {

@@ -67,6 +67,7 @@ func (cart Cart) CheckoutAll(newOrderNumber OrderNumber, now time.Time) (_ Cart,
 		ID:     ulids.New(),
 		UserID: cart.UserID,
 		Number: newOrderNumber,
+		Status: OrderStatusPendingPayment,
 		Items:  items,
 	}
 
@@ -82,7 +83,6 @@ func (cart Cart) isAllItemsHaveStocks() bool {
 const maxCartItems = 99
 
 func (cart Cart) AddItem(product products.Product, qty int64) (Cart, CartItem, error) {
-
 	if len(cart.Items) >= maxCartItems {
 		return Cart{}, CartItem{}, ErrCartIsFull
 	}
@@ -179,11 +179,18 @@ func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
 }
 
 type OrderNumber string
+type OrderStatus string
+
+const (
+	OrderStatusPendingPayment OrderStatus = "pending_payment"
+	OrderStatusProcessed      OrderStatus = "processed"
+)
 
 type Order struct {
 	ID     ulids.ULID
 	UserID ulids.ULID
 	Number OrderNumber
+	Status OrderStatus
 
 	Items []OrderItem
 }
