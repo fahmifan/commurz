@@ -2,8 +2,10 @@ package pkgproduct
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/preloads"
@@ -145,15 +147,60 @@ func (repo ProductWriter) BulkBumpProductVersion(ctx context.Context, tx sqlcs.D
 }
 
 func (repo ProductWriter) BulkSaveProductStocks(ctx context.Context, tx sqlcs.DBTX, stocks []ProductStock) ([]ProductStock, error) {
-	savedStocks := make([]ProductStock, len(stocks))
-	for i := range stocks {
-		savedStock, err := repo.SaveProductStock(ctx, tx, stocks[i])
-		if err != nil {
-			return nil, fmt.Errorf("[BulkSaveProductStocks] SaveProductStock: %w", err)
-		}
+	instBuilder := sq.Insert("product_stocks").
+		Columns("id", "product_id", "stock_in", "stock_out")
 
-		savedStocks[i] = savedStock
+	for _, stock := range stocks {
+		instBuilder = instBuilder.Values(
+			stock.ID.String(),
+			stock.ProductID.String(),
+			stock.StockIn,
+			stock.StockOut,
+		)
 	}
 
-	return savedStocks, nil
+	instBuilder = instBuilder.Suffix("RETURNING id, product_id, stock_in, stock_out, created_at")
+
+	query, args, err := instBuilder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("[bulkSaveProductStocks] ToSql: %w", err)
+	}
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("[bulkSaveProductStocks] QueryContext: %w", err)
+	}
+	defer rows.Close()
+
+	xstock, err := scanProductStocks(rows)
+	if err != nil {
+		return nil, fmt.Errorf("[bulkSaveProductStocks] scanProductStocks: %w", err)
+	}
+
+	insertedStocks := lo.Map(xstock, productStockFromSqlc)
+
+	return insertedStocks, nil
+}
+
+func scanProductStocks(rows *sql.Rows) (products []sqlcs.ProductStock, err error) {
+	for rows.Next() {
+		var v sqlcs.ProductStock
+		if err := rows.Scan(
+			&v.ID,
+			&v.ProductID,
+			&v.StockIn,
+			&v.StockOut,
+			&v.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		products = append(products, v)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return
 }

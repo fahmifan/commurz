@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/labstack/echo/v4"
 )
@@ -14,8 +15,19 @@ type HomeHandler struct {
 
 func (handler HomeHandler) Index() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		listUserRes, err := handler.service.ListUsers(
+			c.Request().Context(),
+			&connect.Request[commurzpbv1.ListUsersRequest]{},
+		)
+		if err != nil {
+			// TODO: log error
+			return c.Render(http.StatusInternalServerError, "partials/error_toast.html", echo.Map{
+				"message": "something went wrong",
+			})
+		}
+
 		return c.Render(http.StatusOK, "home/index.html", echo.Map{
-			"name": "john doe",
+			"users": listUserRes.Msg.Users,
 		})
 	}
 }
@@ -35,7 +47,10 @@ func (handler UserHandler) Create() echo.HandlerFunc {
 			&connect.Request[commurzpbv1.CreateUserRequest]{Msg: req},
 		)
 		if err != nil {
-			return err
+			logs.ErrCtx(c.Request().Context(), err, "UserHandler-Create-CreateUser")
+			return c.Render(http.StatusBadRequest, "home/index.html", echo.Map{
+				"message": "something went wrong",
+			})
 		}
 
 		listRes, err := handler.service.ListUsers(
@@ -43,10 +58,13 @@ func (handler UserHandler) Create() echo.HandlerFunc {
 			&connect.Request[commurzpbv1.ListUsersRequest]{},
 		)
 		if err != nil {
-			return err
+			logs.ErrCtx(c.Request().Context(), err, "UserHandler-Create-ListUsers")
+			return c.Render(http.StatusInternalServerError, "home/index.html", echo.Map{
+				"message": "something went wrong",
+			})
 		}
 
-		return c.Render(http.StatusOK, "user/created.html", echo.Map{
+		return c.Render(http.StatusOK, "home/index.html", echo.Map{
 			"users": listRes.Msg.Users,
 		})
 	}
