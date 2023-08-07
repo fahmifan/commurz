@@ -1,6 +1,7 @@
 CREATE TABLE users (
     id TEXT PRIMARY KEY,
-    email TEXT NOT NULL
+    email TEXT NOT NULL,
+    hashed_password TEXT NOT NULL
 );
 
 CREATE TABLE products (

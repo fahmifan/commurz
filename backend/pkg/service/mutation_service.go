@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	"github.com/fahmifan/ulids"
@@ -179,6 +181,10 @@ func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, user
 	return cart, nil
 }
 
+var (
+	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
+)
+
 func (service *Service) CreateUser(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CreateUserRequest],
@@ -186,19 +192,25 @@ func (service *Service) CreateUser(
 	userReader := pkguser.UserReader{}
 	userWriter := pkguser.UserWriter{}
 
-	user, err := pkguser.NewUser(req.Msg.Email)
+	user, err := pkguser.NewUser(req.Msg.Email, req.Msg.Password)
 	if err != nil {
-		return res, fmt.Errorf("[CreateUser] NewUser: %w", err)
+		if errors.Is(err, pkguser.ErrHashingPassword) {
+			logs.ErrCtx(ctx, err, "CreateUser: NewUser")
+			return nil, ErrInternal
+		}
+
+		return res, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	_, err = userWriter.CreateUser(ctx, service.DB, user)
 	if err != nil {
-		return res, fmt.Errorf("[CreateUser] SaveUser: %w", err)
+		logs.ErrCtx(ctx, err, "CreateUser: userWriter.CreateUser")
+		return res, ErrInternal
 	}
 
 	user, err = userReader.FindUserByID(ctx, service.DB, user.ID)
 	if err != nil {
-		return res, fmt.Errorf("[CreateUser] FindUserByID: %w", err)
+		return res, ErrInternal
 	}
 
 	res = &connect.Response[commurzpbv1.User]{

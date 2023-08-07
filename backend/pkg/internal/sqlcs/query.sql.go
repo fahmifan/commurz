@@ -85,7 +85,7 @@ func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStock
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, email)
 VALUES (?1, ?2)
-RETURNING id, email
+RETURNING id, email, hashed_password
 `
 
 type CreateUserParams struct {
@@ -96,7 +96,7 @@ type CreateUserParams struct {
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.Email)
 	var i User
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.Email, &i.HashedPassword)
 	return i, err
 }
 
@@ -238,7 +238,7 @@ func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string)
 }
 
 const findAllUsers = `-- name: FindAllUsers :many
-SELECT id, email FROM users
+SELECT id, email, hashed_password FROM users
 `
 
 func (q *Queries) FindAllUsers(ctx context.Context) ([]User, error) {
@@ -250,7 +250,7 @@ func (q *Queries) FindAllUsers(ctx context.Context) ([]User, error) {
 	var items []User
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(&i.ID, &i.Email); err != nil {
+		if err := rows.Scan(&i.ID, &i.Email, &i.HashedPassword); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -291,14 +291,25 @@ func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, erro
 	return i, err
 }
 
+const findUserByEmail = `-- name: FindUserByEmail :one
+SELECT id, email, hashed_password FROM users WHERE email = ? LIMIT 1
+`
+
+func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, findUserByEmail, email)
+	var i User
+	err := row.Scan(&i.ID, &i.Email, &i.HashedPassword)
+	return i, err
+}
+
 const findUserByID = `-- name: FindUserByID :one
-SELECT id, email FROM users WHERE id = ?
+SELECT id, email, hashed_password FROM users WHERE id = ?
 `
 
 func (q *Queries) FindUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, findUserByID, id)
 	var i User
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.Email, &i.HashedPassword)
 	return i, err
 }
 

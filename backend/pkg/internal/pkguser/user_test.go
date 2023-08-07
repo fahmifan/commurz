@@ -8,6 +8,8 @@ import (
 )
 
 func TestNewUser(t *testing.T) {
+	const testPassword = "test1234"
+
 	type input struct {
 		email string
 	}
@@ -37,7 +39,7 @@ func TestNewUser(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		_, err := pkguser.NewUser(tc.input.email)
+		_, err := pkguser.NewUser(tc.input.email, testPassword)
 		if tc.expect.shouldErr {
 			require.Error(t, err)
 			continue

@@ -51,6 +51,7 @@ type ProductStock struct {
 }
 
 type User struct {
-	ID    string
-	Email string
+	ID             string
+	Email          string
+	HashedPassword string
 }

@@ -62,6 +62,7 @@ message OrderItem {
 // Requests definition
 message CreateUserRequest {
   string email = 1;
+  string password = 2;
 }
 
 message CreateProductRequest {

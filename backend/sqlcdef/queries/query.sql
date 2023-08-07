@@ -57,5 +57,8 @@ RETURNING *;
 -- name: FindAllUsers :many
 SELECT * FROM users;
 
+-- name: FindUserByEmail :one
+SELECT * FROM users WHERE email = ? LIMIT 1;
+
 -- name: DeleteCart :exec
 DELETE FROM carts WHERE id = ?;
