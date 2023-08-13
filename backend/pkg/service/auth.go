@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 )
 
 type User struct {
-	ID ulids.ULID
+	ID uuid.UUID
 }
 type CtxKey string
 

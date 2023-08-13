@@ -1,8 +1,8 @@
 -- name: FindOrderItemsByOrderID :many
-SELECT * FROM order_items WHERE order_id = ?;
+SELECT * FROM order_items WHERE order_id = @order_id;
 
 -- name: FindOrderByID :one
-SELECT * FROM orders WHERE id = ?;
+SELECT * FROM orders WHERE id = @id;
 
 -- name: SaveOrder :one
 INSERT INTO orders (id, user_id, number)

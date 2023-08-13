@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -19,17 +18,18 @@ import (
 )
 
 type Webserver struct {
-	db      *sql.DB
-	echo    *echo.Echo
-	service *service.Service
-	port    int
-	session *Session
+	authRouter http.Handler
+	echo       *echo.Echo
+	service    *service.Service
+	port       int
+	session    *Session
 }
 
-func NewWebserver(service *service.Service, port int) *Webserver {
+func NewWebserver(service *service.Service, port int, authRouter http.Handler) *Webserver {
 	return &Webserver{
-		service: service,
-		port:    port,
+		service:    service,
+		port:       port,
+		authRouter: authRouter,
 	}
 }
 
@@ -55,6 +55,8 @@ func (server *Webserver) Run() error {
 	grpHandlerName, grpcHandler := commurzv1connect.NewCommurzServiceHandler(
 		server.service,
 	)
+
+	server.echo.Any("/auth/*", echo.WrapHandler(server.authRouter), trimPathGroup("/*"))
 	server.echo.Group("/grpc").Any(
 		grpHandlerName+"*",
 		echo.WrapHandler(grpcHandler),

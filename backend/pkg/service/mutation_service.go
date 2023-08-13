@@ -18,13 +18,14 @@ import (
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 )
 
 func (service *Service) CheckoutAll(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CheckoutAllRequest],
 ) (*connect.Response[commurzpbv1.Order], error) {
-	userID, err := pkgutil.ParseULID(req.Msg.UserId)
+	userID, err := uuid.Parse(req.Msg.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("[CheckoutAll] parse userID: %w", err)
 	}
@@ -103,7 +104,7 @@ func (service *Service) AddProductToCart(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.AddProductToCartRequest],
 ) (*connect.Response[commurzpbv1.Cart], error) {
-	userID, err := pkgutil.ParseULID(req.Msg.GetUserId())
+	userID, err := uuid.Parse(req.Msg.GetUserId())
 	if err != nil {
 		return nil, fmt.Errorf("[AddItemToCart] parse userID: %w", err)
 	}
@@ -152,7 +153,7 @@ func (service *Service) AddProductToCart(
 	return res, nil
 }
 
-func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID ulids.ULID) (cart pkgorder.Cart, err error) {
+func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID) (cart pkgorder.Cart, err error) {
 	cartReader := pkgorder.CartReader{}
 	cartWriter := pkgorder.CartWriter{}
 

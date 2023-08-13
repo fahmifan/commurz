@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/oklog/ulid/v2"
 	"github.com/samber/lo"
 )
@@ -31,6 +32,14 @@ func WeakParseULID(s string) ulids.ULID {
 		return ulids.ULID{}
 	}
 	return ulids.ULID{ULID: id}
+}
+
+func WeakParseUUID(s string) uuid.UUID {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
 }
 
 func ParseULID(in string) (ulids.ULID, error) {

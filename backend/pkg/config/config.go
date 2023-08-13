@@ -13,6 +13,8 @@ type Config struct {
 	CSRFSecret       string `env:"CSRF_SECRET"`
 	EnableSecureCSRF string `env:"CSRF_ENABLE_SECURE"`
 	CookieSecret     string `env:"COOKIE_SECRET"`
+	RedisHost        string `env:"REDIS_HOST"`
+	PostgresDSN      string `env:"POSTGRES_DSN"`
 	Debug            string `env:"DEBUG"`
 	ENV              string `env:"ENV"`
 	Port             string `env:"PORT"`
@@ -38,11 +40,17 @@ func Parse(filename string) {
 		cfg.ENV = os.Getenv("ENV")
 		cfg.Port = os.Getenv("PORT")
 		cfg.BaseURL = os.Getenv("BASE_URL")
+		cfg.PostgresDSN = os.Getenv("POSTGRES_DSN")
+		cfg.RedisHost = os.Getenv("REDIS_HOST")
 	})
 }
 
 func CookieSecret() string {
 	return cfg.CookieSecret
+}
+
+func RedisHost() string {
+	return cfg.RedisHost
 }
 
 func Debug() bool {
@@ -71,4 +79,8 @@ func Port() string {
 
 func BaseURL() string {
 	return cfg.BaseURL
+}
+
+func PostgresDSN() string {
+	return cfg.PostgresDSN
 }

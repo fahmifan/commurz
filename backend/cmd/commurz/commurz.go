@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fahmifan/authme/backend/httphandler"
+	"github.com/fahmifan/authme/backend/smtpmail"
+	"github.com/fahmifan/authme/register"
+	"github.com/fahmifan/commurz/pkg/config"
 	"github.com/fahmifan/commurz/pkg/service"
 	"github.com/fahmifan/commurz/pkg/web/webserver"
-	_ "modernc.org/sqlite"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -18,10 +22,11 @@ func main() {
 }
 
 func run() error {
-	dsnURI := "file::memory:?mode=memory&cache=shared&journal_mode=wal&_fk=1"
-	db, err := sql.Open("sqlite", dsnURI)
+	config.Parse(".env")
+
+	db, err := sql.Open("postgres", config.PostgresDSN())
 	if err != nil {
-		return err
+		return fmt.Errorf("open database: %w", err)
 	}
 
 	if err := migrate(db); err != nil {
@@ -32,7 +37,34 @@ func run() error {
 		DB: db,
 	})
 
-	ws := webserver.NewWebserver(svc, 8080)
+	mailComposer := register.NewDefaultMailComposer("cs@commurz.com", "commurz")
+	smtpClient, err := smtpmail.NewSmtpClient(&smtpmail.Config{
+		Host: "localhost",
+		Port: 1025,
+	})
+	if err != nil {
+		return fmt.Errorf("smtpmail.NewSmtpClient: %w", err)
+	}
+
+	authHandler := httphandler.NewHTTPHandler(httphandler.NewHTTPHandlerArg{
+		RedisHost:           config.RedisHost(),
+		DB:                  db,
+		JWTSecret:           []byte("secret"),
+		VerificationBaseURL: "http://localhost:8080" + httphandler.PathVerifyRegister,
+		MailComposer:        mailComposer,
+		Mailer:              smtpClient,
+	})
+
+	if err := authHandler.MigrateUp(); err != nil {
+		return fmt.Errorf("authHandler.MigrateUp: %w", err)
+	}
+
+	authRouter, err := authHandler.Router()
+	if err != nil {
+		return fmt.Errorf("authHandler.Router: %w", err)
+	}
+
+	ws := webserver.NewWebserver(svc, 8080, authRouter)
 
 	return ws.Run()
 }

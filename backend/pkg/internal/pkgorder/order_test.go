@@ -8,12 +8,13 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCart_AddItem(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 		now := time.Now()
 
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
@@ -30,7 +31,7 @@ func TestCart_AddItem(t *testing.T) {
 	})
 
 	t.Run("failed out of stock", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 		now := time.Now()
 
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
@@ -49,7 +50,7 @@ func TestCart_AddItem(t *testing.T) {
 
 func TestCart_RemoveItem(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 		now := time.Now()
 
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
@@ -69,14 +70,14 @@ func TestCart_RemoveItem(t *testing.T) {
 	})
 
 	t.Run("cart is empty, should not found", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 
 		_, _, err := cart.RemoveItem(ulids.New())
 		require.ErrorAs(t, err, &pkgorder.ErrNotFound)
 	})
 
 	t.Run("wrong id, should not found", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 		now := time.Now()
 
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
@@ -96,7 +97,7 @@ func TestCart_RemoveItem(t *testing.T) {
 
 func TestCart_CheckoutAll(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		cart := pkgorder.NewCart(ulids.New())
+		cart := pkgorder.NewCart(uuid.New())
 		now := time.Now()
 
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))

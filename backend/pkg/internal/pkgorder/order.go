@@ -13,6 +13,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
@@ -27,7 +28,7 @@ var (
 
 type Cart struct {
 	ID     ulids.ULID
-	UserID ulids.ULID
+	UserID uuid.UUID
 
 	User  pkguser.User
 	Items []CartItem
@@ -36,11 +37,11 @@ type Cart struct {
 func cartFromSqlc(xcart sqlcs.Cart) Cart {
 	return Cart{
 		ID:     pkgutil.WeakParseULID(xcart.ID),
-		UserID: pkgutil.WeakParseULID(xcart.UserID),
+		UserID: xcart.UserID,
 	}
 }
 
-func NewCart(userID ulids.ULID) Cart {
+func NewCart(userID uuid.UUID) Cart {
 	return Cart{
 		ID:     ulids.New(),
 		UserID: userID,
@@ -188,7 +189,7 @@ const (
 
 type Order struct {
 	ID     ulids.ULID
-	UserID ulids.ULID
+	UserID uuid.UUID
 	Number OrderNumber
 	Status OrderStatus
 
@@ -198,7 +199,7 @@ type Order struct {
 func orderFromSqlc(xorder sqlcs.Order) Order {
 	return Order{
 		ID:     pkgutil.WeakParseULID(xorder.ID),
-		UserID: pkgutil.WeakParseULID(xorder.UserID),
+		UserID: xorder.UserID,
 		Number: OrderNumber(xorder.Number),
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 )
@@ -31,12 +31,12 @@ func NewSession(
 
 // AuthUser ..
 type AuthUser struct {
-	UserID ulids.ULID
+	UserID uuid.UUID
 	// ExpiredAt at empty means use the provided maxAge
 	ExpiredAt time.Time
 }
 
-func (sa *Session) SaveUser(c echo.Context, maxAge int, userID ulids.ULID) error {
+func (sa *Session) SaveUser(c echo.Context, maxAge int, userID uuid.UUID) error {
 	sess, err := sa.store.Get(c.Request(), _sessionUserKey)
 	if err != nil {
 		return nil

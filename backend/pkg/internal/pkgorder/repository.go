@@ -11,6 +11,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/preloads"
 	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
@@ -20,10 +21,10 @@ func init() {
 
 type CartReader struct{}
 
-func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, userID ulids.ULID) (Cart, error) {
+func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID) (Cart, error) {
 	queries := sqlcs.New(tx)
 
-	xcart, err := queries.FindCartByUserID(ctx, userID.String())
+	xcart, err := queries.FindCartByUserID(ctx, userID)
 	if err != nil {
 		return Cart{}, fmt.Errorf("[FindCartByUserID] FindCartByUserID: %w", err)
 	}
@@ -81,7 +82,7 @@ func (CartWriter) SaveCart(ctx context.Context, tx sqlcs.DBTX, cart Cart) (Cart,
 
 	xcart, err := query.CreateCart(ctx, sqlcs.CreateCartParams{
 		ID:     cart.ID.String(),
-		UserID: cart.UserID.String(),
+		UserID: cart.UserID,
 	})
 	if err != nil {
 		return Cart{}, fmt.Errorf("[SaveCart] query: %w", err)
@@ -177,7 +178,7 @@ func (OrderWriter) CreateOrder(ctx context.Context, tx sqlcs.DBTX, order Order) 
 
 	_, err := query.SaveOrder(ctx, sqlcs.SaveOrderParams{
 		ID:     order.ID.String(),
-		UserID: order.UserID.String(),
+		UserID: order.UserID,
 		Number: string(order.Number),
 	})
 	if err != nil {

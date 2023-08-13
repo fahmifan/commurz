@@ -1,11 +1,11 @@
 -- name: FindProductByID :one
-SELECT * FROM products WHERE id = ?;
+SELECT * FROM products WHERE id = @id;
 
 -- name: FindCartByUserID :one
-SELECT * FROM carts WHERE user_id = ?;
+SELECT * FROM carts WHERE user_id = @user_id;
 
 -- name: FindUserByID :one
-SELECT * FROM users WHERE id = ?;
+SELECT * FROM users WHERE id = @id;
 
 -- name: FindAllCartItemsByCartIDs :many
 SELECT * FROM cart_items WHERE cart_id IN (sqlc.slice('cart_ids'));
@@ -58,7 +58,7 @@ RETURNING *;
 SELECT * FROM users;
 
 -- name: FindUserByEmail :one
-SELECT * FROM users WHERE email = ? LIMIT 1;
+SELECT * FROM users WHERE email = @email LIMIT 1;
 
 -- name: DeleteCart :exec
-DELETE FROM carts WHERE id = ?;
+DELETE FROM carts WHERE id = @id;

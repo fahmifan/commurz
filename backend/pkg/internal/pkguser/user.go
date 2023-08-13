@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"net/mail"
 
-	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
-	"github.com/fahmifan/ulids"
+	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID             ulids.ULID
+	ID             uuid.UUID
 	Email          string
 	HashedPassword string
 }
@@ -40,7 +39,7 @@ func NewUser(email, plainPassword string) (User, error) {
 	}
 
 	user := User{
-		ID:             ulids.New(),
+		ID:             uuid.New(),
 		Email:          email,
 		HashedPassword: string(bcryptPassword),
 	}
@@ -59,16 +58,16 @@ func (u User) CanLogin(plainPassword string) error {
 
 func userFromSqlc(xuser sqlcs.User) User {
 	return User{
-		ID:    pkgutil.WeakParseULID(xuser.ID),
+		ID:    xuser.ID,
 		Email: xuser.Email,
 	}
 }
 
 type UserReader struct{}
 
-func (UserReader) FindUserByID(ctx context.Context, tx sqlcs.DBTX, id ulids.ULID) (User, error) {
+func (UserReader) FindUserByID(ctx context.Context, tx sqlcs.DBTX, id uuid.UUID) (User, error) {
 	queries := sqlcs.New(tx)
-	xuser, err := queries.FindUserByID(ctx, id.String())
+	xuser, err := queries.FindUserByID(ctx, id)
 	if err != nil {
 		return User{}, fmt.Errorf("[FindUserByID] FindUserByID: %w", err)
 	}
@@ -105,7 +104,7 @@ type UserWriter struct{}
 func (UserWriter) CreateUser(ctx context.Context, tx sqlcs.DBTX, user User) (User, error) {
 	queries := sqlcs.New(tx)
 	xuser, err := queries.CreateUser(ctx, sqlcs.CreateUserParams{
-		ID:    user.ID.String(),
+		ID:    user.ID,
 		Email: user.Email,
 	})
 	if err != nil {
