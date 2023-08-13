@@ -16,8 +16,8 @@ github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSV
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fahmifan/authme v0.0.0-20230811095840-5d1588cb9198 h1:5/eASQaoIkZ/BsaWynCR5Y2yzyxsqOd3v9V4ZIteN2g=
-github.com/fahmifan/authme v0.0.0-20230811095840-5d1588cb9198/go.mod h1:/eFLUPakfUHKR7PVP3kdMyHddUhetuOrNWgSR49qZ2o=
+github.com/fahmifan/authme v0.0.0-20230813233809-dfd6ac918147 h1:ivvL8bGqAYAAXAHLgKC3sWOcEJZwB/5UAijDz7YFMiM=
+github.com/fahmifan/authme v0.0.0-20230813233809-dfd6ac918147/go.mod h1:/eFLUPakfUHKR7PVP3kdMyHddUhetuOrNWgSR49qZ2o=
 github.com/fahmifan/ulids v1.1.0 h1:Mc81ilaOAlCE3jkbSEIJFKaFuQUbcphK3/Zn+cw1WPY=
 github.com/fahmifan/ulids v1.1.0/go.mod h1:yflA/L4Y7d46mWy408i4kfMsd+Q1FaKuA12++7ciFs0=
 github.com/go-chi/chi/v5 v5.0.10 h1:rLz5avzKpjqxrYwXNfmjkrYYXOyLJd37pz53UFHC6vk=
@@ -123,7 +123,6 @@ github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE
 github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf h1:pvbZ0lM0XWPBqUKqFU8cmavspvIl9nulOYwdy6IFRRo=
 github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf/go.mod h1:RJID2RhlZKId02nZ62WenDCkgHFerpIOmW0iT7GKmXM=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=

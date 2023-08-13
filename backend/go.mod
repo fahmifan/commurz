@@ -2,11 +2,10 @@ module github.com/fahmifan/commurz
 
 go 1.20
 
-
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bufbuild/connect-go v1.9.0
-	github.com/fahmifan/authme v0.0.0-20230811095840-5d1588cb9198
+	github.com/fahmifan/authme v0.0.0-20230813233809-dfd6ac918147
 	github.com/fahmifan/ulids v1.1.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.3.0
