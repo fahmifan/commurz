@@ -4,62 +4,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/mail"
 
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/flycasbin/acl"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID             uuid.UUID
-	Email          string
-	HashedPassword string
+	ID    uuid.UUID
+	Email string
+	Role  acl.Role
 }
 
 var (
 	ErrHashingPassword = errors.New("error hashing password")
 )
 
-func NewUser(email, plainPassword string) (User, error) {
-	_, err := mail.ParseAddress(email)
-	if err != nil {
-		return User{}, errors.New("invalid email address")
-	}
-
-	// simple rule for now
-	if len(plainPassword) < 8 {
-		return User{}, errors.New("password must be at least 8 characters")
-	}
-
-	bcryptPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return User{}, fmt.Errorf("[NewUser] %w: %w", ErrHashingPassword, err)
-	}
-
-	user := User{
-		ID:             uuid.New(),
-		Email:          email,
-		HashedPassword: string(bcryptPassword),
-	}
-
-	return user, nil
-}
-
-func (u User) CanLogin(plainPassword string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(u.HashedPassword), []byte(plainPassword))
-	if err != nil {
-		return fmt.Errorf("[User-CanLogin] CompareHashAndPassword: %w", err)
-	}
-
-	return nil
-}
-
 func userFromSqlc(xuser sqlcs.User) User {
 	return User{
 		ID:    xuser.ID,
 		Email: xuser.Email,
+		Role:  acl.Role(xuser.Role),
 	}
 }
 

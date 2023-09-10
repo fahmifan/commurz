@@ -13,6 +13,44 @@ import (
 	"github.com/samber/lo"
 )
 
+type Count = int64
+
+type ProductBackofficeReader struct{}
+
+func (ProductBackofficeReader) FindAllProducts(
+	ctx context.Context,
+	tx sqlcs.DBTX,
+	arg sqlcs.FindAllProductsForBackofficeParams,
+) ([]Product, Count, error) {
+	query := sqlcs.New(tx)
+
+	xproducts, err := query.FindAllProductsForBackoffice(ctx, arg)
+	if err != nil {
+		return nil, 0, fmt.Errorf("[FindAllProducts] FindAllProducts: %w", err)
+	}
+
+	products := lo.Map(xproducts, productFromSqlc)
+	productIDs := lo.Map(products, func(product Product, _ int) ulids.ULID { return product.ID })
+
+	products, err = preloads.PreloadMany[Product, ProductStock, ulids.ULID]{
+		Targets:    products,
+		RefItem:    func(item ProductStock) ulids.ULID { return item.ProductID },
+		RefTarget:  func(target Product) ulids.ULID { return target.ID },
+		SetItem:    func(target *Product, items []ProductStock) { target.Stocks = items },
+		FetchItems: func() ([]ProductStock, error) { return ProductReader{}.FindAllProductStocksByIDs(ctx, tx, productIDs) },
+	}.Preload()
+	if err != nil {
+		return nil, 0, fmt.Errorf("[FindAllProducts] FindAllProductStocksByIDs: %w", err)
+	}
+
+	count, err := query.CountAllProductsForBackoffice(ctx, sqlcs.CountAllProductsForBackofficeParams{
+		Name:    arg.Name,
+		SetName: arg.SetName,
+	})
+
+	return products, count, nil
+}
+
 type ProductReader struct{}
 
 func (ProductReader) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id ulids.ULID) (Product, error) {
@@ -58,6 +96,10 @@ func (repo ProductReader) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, 
 }
 
 func (ProductReader) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]ProductStock, error) {
+	if len(productIDs) == 0 {
+		return nil, nil
+	}
+
 	queries := sqlcs.New(tx)
 
 	xstocks, err := queries.FindAllProductStocksByIDs(ctx, pkgutil.StringULIDs(productIDs))

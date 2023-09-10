@@ -11,7 +11,6 @@ import (
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/logs"
@@ -62,6 +61,8 @@ func (service *Service) CheckoutAll(
 			return fmt.Errorf("[CheckoutAll] BulkSaveOrderItems: %w", err)
 		}
 
+		// TODO: we can improve this later
+		//
 		// bump product version while saving the reduced product stocks to avoid race condition.
 		// product stocks should have rolledback if the product version is failed to bumped.
 		{
@@ -186,41 +187,6 @@ var (
 	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
 )
 
-func (service *Service) CreateUser(
-	ctx context.Context,
-	req *connect.Request[commurzpbv1.CreateUserRequest],
-) (res *connect.Response[commurzpbv1.User], err error) {
-	userReader := pkguser.UserReader{}
-	userWriter := pkguser.UserWriter{}
-
-	user, err := pkguser.NewUser(req.Msg.Email, req.Msg.Password)
-	if err != nil {
-		if errors.Is(err, pkguser.ErrHashingPassword) {
-			logs.ErrCtx(ctx, err, "CreateUser: NewUser")
-			return nil, ErrInternal
-		}
-
-		return res, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
-	_, err = userWriter.CreateUser(ctx, service.DB, user)
-	if err != nil {
-		logs.ErrCtx(ctx, err, "CreateUser: userWriter.CreateUser")
-		return res, ErrInternal
-	}
-
-	user, err = userReader.FindUserByID(ctx, service.DB, user.ID)
-	if err != nil {
-		return res, ErrInternal
-	}
-
-	res = &connect.Response[commurzpbv1.User]{
-		Msg: protoserde.FromUserPkg(user),
-	}
-
-	return res, nil
-}
-
 func (service *Service) CreateProduct(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CreateProductRequest],
@@ -230,17 +196,20 @@ func (service *Service) CreateProduct(
 
 	product, err := pkgproduct.CreateProduct(req.Msg.Name, pkgprice.New(req.Msg.Price))
 	if err != nil {
-		return res, fmt.Errorf("[CreateProduct] CreateProduct: %w", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	_, err = productWriter.SaveProduct(ctx, service.DB, product)
+	product, err = productWriter.SaveProduct(ctx, service.DB, product)
 	if err != nil {
-		return res, fmt.Errorf("[CreateProduct] CreateProduct: %w", err)
+		logs.ErrCtx(ctx, err, "[CreateProduct] SaveProduct")
+		return nil, ErrInternal
 	}
 
+	fmt.Println("DEBUG >>> find >>>", product)
 	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
 	if err != nil {
-		return res, fmt.Errorf("[CreateProduct] FindProductByID: %w", err)
+		logs.ErrCtx(ctx, err, "[CreateProduct] FindProductByID")
+		return nil, ErrInternal
 	}
 
 	res = &connect.Response[commurzpbv1.Product]{

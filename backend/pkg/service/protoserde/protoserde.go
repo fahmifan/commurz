@@ -18,7 +18,14 @@ func FromUserPkg(user pkguser.User) *commurzpbv1.User {
 	return &commurzpbv1.User{
 		Id:    user.ID.String(),
 		Email: user.Email,
+		Role:  string(user.Role),
 	}
+}
+
+func ListFromProductPkg(products []pkgproduct.Product) []*commurzpbv1.Product {
+	return lo.Map(products, func(product pkgproduct.Product, _ int) *commurzpbv1.Product {
+		return FromProductPkg(product)
+	})
 }
 
 func FromProductPkg(product pkgproduct.Product) *commurzpbv1.Product {

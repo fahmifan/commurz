@@ -10,6 +10,7 @@ option go_package = "github.com/fahmifan/commurz/pkg/pb/commurz/v1;commurzv1";
 message User {
   string id = 1;
   string email = 2;
+  string role = 3;
 }
 
 message Product {
@@ -86,18 +87,40 @@ message CheckoutAllRequest {
   string user_id = 1; // TODO: remove this, change to auth token/session
 }
 
+message FindByIDRequest {
+  string id = 1;
+}
+
 message ListUsersRequest {}
 
 message ListUsersResponse {
   repeated User users = 1;
 }
 
+message Pagination {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message ListBackofficeProductsRequest {
+  Pagination pagination = 1;
+  string name = 2;
+}
+
+message ListBackofficeProductsResponse {
+  repeated Product products = 1;
+  int32 count = 2;
+}
+
 // Service definition
 service CommurzService {
   // user
-  rpc CreateUser(CreateUserRequest) returns (User) {}
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+  rpc FindUserByID(FindByIDRequest) returns (User) {}
 
+  // backoffice
+  rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}
+  
   // product
   rpc CreateProduct(CreateProductRequest) returns (Product) {}
   rpc AddProductStock(ChangeProductStockRequest) returns (Product) {}

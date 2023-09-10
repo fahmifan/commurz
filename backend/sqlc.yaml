@@ -1,7 +1,7 @@
 version: 2
 sql:
   - engine: "postgresql"
-    schema: "sqlcdef/schema.sql"
+    schema: "sqlcdef/migrations"
     queries: "sqlcdef/queries"
     gen:
       go:

@@ -2,43 +2,52 @@ package webserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/fahmifan/authme/backend/httphandler"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/config"
 	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/pb/commurz/v1/commurzv1connect"
 	"github.com/fahmifan/commurz/pkg/service"
 	"github.com/fahmifan/commurz/pkg/web/webserver/httperr"
+	"github.com/fahmifan/flycasbin/acl"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	vueglue "github.com/torenware/vite-go"
 )
 
 type Webserver struct {
-	authRouter http.Handler
-	echo       *echo.Echo
-	service    *service.Service
-	port       int
-	session    *Session
+	cookieAutherHandler *httphandler.CookieAuthHandler
+	echo                *echo.Echo
+	service             *service.Service
+	port                int
 }
 
-func NewWebserver(service *service.Service, port int, authRouter http.Handler) *Webserver {
+func NewWebserver(service *service.Service, port int, cookieAutherHandler *httphandler.CookieAuthHandler) *Webserver {
 	return &Webserver{
-		service:    service,
-		port:       port,
-		authRouter: authRouter,
+		service:             service,
+		port:                port,
+		cookieAutherHandler: cookieAutherHandler,
 	}
+}
+
+func (server *Webserver) Stop(ctx context.Context) error {
+	return server.echo.Shutdown(ctx)
 }
 
 func (server *Webserver) Run() error {
 	server.echo = echo.New()
 
 	pageMdw := PageMiddleware{server}
-	apiMdw := APIMiddleware{server}
+	// apiMdw := APIMiddleware{server}
 
+	server.echo.Renderer = &Renderer{}
 	server.echo.Use(
 		middleware.RemoveTrailingSlash(),
 		logs.EchoRequestID(),
@@ -56,26 +65,37 @@ func (server *Webserver) Run() error {
 		server.service,
 	)
 
-	server.echo.Any("/auth/*", echo.WrapHandler(server.authRouter), trimPathGroup("/*"))
+	authRouter, err := server.cookieAutherHandler.CookieAuthRouter()
+	if err != nil {
+		return fmt.Errorf("webserver: cookieAutherHandler.CookieAuthRouter: %w", err)
+	}
+
+	server.cookieAutherHandler.SetRedirectAfterLogin(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("redirect after login")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+	cookieMdw := server.cookieAutherHandler.Middleware()
+
+	server.echo.Use(
+		echo.WrapMiddleware(cookieMdw.SetAuthUserToCtx()),
+	)
+
+	if err = server.routeFE(server.echo, &pageMdw); err != nil {
+		return fmt.Errorf("webserver: routeFE: %w", err)
+	}
+
+	server.echo.GET("/ping", func(c echo.Context) error {
+		return c.String(http.StatusOK, "pong")
+	})
+	server.echo.Any("/api/auth*", echo.WrapHandler(authRouter), trimPath("*"))
 	server.echo.Group("/grpc").Any(
 		grpHandlerName+"*",
 		echo.WrapHandler(grpcHandler),
-		apiMdw.MustAuth(),
-		trimPathGroup("/grpc"),
+		echo.WrapMiddleware(cookieMdw.CSRF()),
+		trimPath("/grpc"),
 	)
 
-	server.routeFE(server.echo, &pageMdw)
-
 	return server.echo.Start(server.getPort())
-}
-
-func trimPathGroup(groupPrefix string) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Request().URL.Path = strings.TrimPrefix(c.Request().URL.Path, groupPrefix)
-			return next(c)
-		}
-	}
 }
 
 func (server *Webserver) getPort() string {
@@ -86,8 +106,11 @@ func (server *Webserver) getPort() string {
 	return ":" + fmt.Sprint(server.port)
 }
 
-func (server *Webserver) Stop(ctx context.Context) error {
-	return server.echo.Shutdown(ctx)
+func (s *Webserver) renderAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
+	group.GET("/", hh).Name = "page-index" // login
+	group.GET("/backoffice/products", hh, pageMdw.HasAccess([]service.Perm{
+		Perm(auth.Manage, auth.Product),
+	})).Name = "page-backoffice-products"
 }
 
 func (s *Webserver) routeFE(ec *echo.Echo, pageMdw *PageMiddleware) error {
@@ -127,20 +150,12 @@ func (s *Webserver) routeDevFE(ec *echo.Echo, pageMdw *PageMiddleware) (err erro
 		// staticGroup.StaticFS("/favicons", faviconFS)
 	}
 
-	viteRenderer := s.renderVite("pages/vite/index.html", viteGlue)
+	viteRenderer := s.renderVite("templates/vite/index.html", viteGlue)
 	reactGroup := s.echo.Group("")
 	{
 		s.renderAllFEs(reactGroup, viteRenderer, pageMdw)
 	}
 	return nil
-}
-
-func (s *Webserver) renderAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
-	group.GET("/", hh, pageMdw.MustAuth()).Name = "page-index"
-	group.GET("/journals", hh, pageMdw.MustAuth()).Name = "page-carts"
-	group.GET("/carts/*", hh, pageMdw.MustAuth()).Name = "page-carts"
-	group.GET("/auth/login/new", hh, pageMdw.MustNonAuth()).Name = "page-auth-login-new"
-	group.GET("/auth/register/new", hh, pageMdw.MustNonAuth()).Name = "page-auth-register-new"
 }
 
 func (s *Webserver) renderVite(tplName string, viteGlue *vueglue.VueGlue) echo.HandlerFunc {
@@ -149,15 +164,51 @@ func (s *Webserver) renderVite(tplName string, viteGlue *vueglue.VueGlue) echo.H
 	}
 }
 
+func Perm(action acl.Action, resource acl.Resource) service.Perm {
+	return service.Perm{Action: action, Resource: resource}
+}
+
 type PageMiddleware struct {
 	*Webserver
+}
+
+func (mw *PageMiddleware) HasAccess(perms []service.Perm) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ec echo.Context) error {
+			authUser, ok := httphandler.GetUser(ec.Request().Context())
+			if !ok {
+				return ec.Redirect(http.StatusFound, "/api/auth/new")
+			}
+
+			userID, err := uuid.Parse(authUser.GUID)
+			if err != nil {
+				return ec.Redirect(http.StatusFound, "/api/auth/new")
+			}
+
+			err = mw.service.InternalHasAccess(ec.Request().Context(), userID, perms)
+			if err != nil {
+				if !errors.Is(err, acl.ErrPermissionDenied) {
+					logs.ErrCtx(ec.Request().Context(), err, "[HasAccess] mw.acl.Can")
+					return ec.JSON(http.StatusInternalServerError, echo.Map{
+						"error": "internal error",
+					})
+				}
+
+				return ec.JSON(http.StatusForbidden, echo.Map{
+					"error": err.Error(),
+				})
+			}
+
+			return next(ec)
+		}
+	}
 }
 
 func (mw *PageMiddleware) MustAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ec echo.Context) error {
-			authUser := mw.session.GetUser(ec)
-			if authUser == nil {
+			_, ok := httphandler.GetUser(ec.Request().Context())
+			if !ok {
 				return ec.Redirect(http.StatusFound, ec.Echo().Reverse("page-auth-login-new"))
 			}
 
@@ -169,8 +220,8 @@ func (mw *PageMiddleware) MustAuth() echo.MiddlewareFunc {
 func (mw *PageMiddleware) MustNonAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ec echo.Context) error {
-			authUser := mw.session.GetUser(ec)
-			if authUser != nil {
+			_, ok := httphandler.GetUser(ec.Request().Context())
+			if ok {
 				return ec.Redirect(http.StatusFound, "/")
 			}
 
@@ -186,18 +237,21 @@ type APIMiddleware struct {
 func (mw *APIMiddleware) MustAuth() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ec echo.Context) error {
-			authUser := mw.session.GetUser(ec)
-			if authUser == nil {
+			_, ok := httphandler.GetUser(ec.Request().Context())
+			if !ok {
 				return httperr.JSON(ec, httperr.ErrUnauthorized)
 			}
 
-			ctx := service.CtxWithUser(ec.Request().Context(), service.User{
-				ID: authUser.UserID,
-			})
-
-			ec.SetRequest(ec.Request().WithContext(ctx))
-
 			return next(ec)
+		}
+	}
+}
+
+func trimPath(groupPrefix string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Request().URL.Path = strings.TrimPrefix(c.Request().URL.Path, groupPrefix)
+			return next(c)
 		}
 	}
 }

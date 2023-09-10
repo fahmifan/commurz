@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fahmifan/authme"
 	"github.com/fahmifan/authme/backend/httphandler"
 	"github.com/fahmifan/authme/backend/smtpmail"
 	"github.com/fahmifan/authme/register"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/config"
 	"github.com/fahmifan/commurz/pkg/service"
 	"github.com/fahmifan/commurz/pkg/web/webserver"
@@ -33,8 +35,14 @@ func run() error {
 		return err
 	}
 
+	acl, err := auth.NewACL()
+	if err != nil {
+		return fmt.Errorf("auth.NewACL: %w", err)
+	}
+
 	svc := service.NewService(&service.Config{
-		DB: db,
+		DB:  db,
+		ACL: acl,
 	})
 
 	mailComposer := register.NewDefaultMailComposer("cs@commurz.com", "commurz")
@@ -46,25 +54,27 @@ func run() error {
 		return fmt.Errorf("smtpmail.NewSmtpClient: %w", err)
 	}
 
-	authHandler := httphandler.NewHTTPHandler(httphandler.NewHTTPHandlerArg{
-		RedisHost:           config.RedisHost(),
+	accountHandler := httphandler.NewAccountHandler(httphandler.NewAccountHandlerArg{
+		VerificationBaseURL: config.BaseURL() + httphandler.PathVerifyRegister,
 		DB:                  db,
-		JWTSecret:           []byte("secret"),
-		VerificationBaseURL: "http://localhost:8080" + httphandler.PathVerifyRegister,
 		MailComposer:        mailComposer,
 		Mailer:              smtpClient,
+		Locker:              authme.NewDefaultLocker(),
+		CSRFSecret:          []byte(config.CSRFSecret()),
+		RegisterRedirectURL: config.FEBaseURL() + "/",
+		CSRFSecure:          false,
+	})
+	cookieHandler := httphandler.NewCookieAuthHandler(httphandler.NewCookieAuthHandlerArg{
+		AccountHandler: accountHandler,
+		RoutePrefix:    "/api",
+		CookieSecret:   []byte(config.CookieSecret()),
 	})
 
-	if err := authHandler.MigrateUp(); err != nil {
+	if err := accountHandler.MigrateUp(); err != nil {
 		return fmt.Errorf("authHandler.MigrateUp: %w", err)
 	}
 
-	authRouter, err := authHandler.Router()
-	if err != nil {
-		return fmt.Errorf("authHandler.Router: %w", err)
-	}
-
-	ws := webserver.NewWebserver(svc, 8080, authRouter)
+	ws := webserver.NewWebserver(svc, config.Port(), cookieHandler)
 
 	return ws.Run()
 }

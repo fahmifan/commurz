@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const bumpProductVersion = `-- name: BumpProductVersion :one
@@ -87,7 +88,7 @@ func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStock
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, email)
 VALUES ($1, $2)
-RETURNING id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at
+RETURNING id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at, role
 `
 
 type CreateUserParams struct {
@@ -109,6 +110,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Archived,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Role,
 	)
 	return i, err
 }
@@ -166,21 +168,11 @@ func (q *Queries) FindAllCartItemsByCartIDs(ctx context.Context, cartIds []strin
 }
 
 const findAllProductStocksByIDs = `-- name: FindAllProductStocksByIDs :many
-SELECT id, product_id, stock_in, stock_out, created_at FROM product_stocks WHERE product_id IN ($1)
+SELECT id, product_id, stock_in, stock_out, created_at FROM product_stocks WHERE product_id = ANY($1::TEXT[])
 `
 
 func (q *Queries) FindAllProductStocksByIDs(ctx context.Context, productIds []string) ([]ProductStock, error) {
-	query := findAllProductStocksByIDs
-	var queryParams []interface{}
-	if len(productIds) > 0 {
-		for _, v := range productIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:product_ids*/?", strings.Repeat(",?", len(productIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:product_ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	rows, err := q.db.QueryContext(ctx, findAllProductStocksByIDs, pq.Array(productIds))
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +243,7 @@ func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string)
 }
 
 const findAllUsers = `-- name: FindAllUsers :many
-SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at FROM users
+SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at, role FROM users
 `
 
 func (q *Queries) FindAllUsers(ctx context.Context) ([]User, error) {
@@ -274,6 +266,7 @@ func (q *Queries) FindAllUsers(ctx context.Context) ([]User, error) {
 			&i.Archived,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
@@ -316,7 +309,7 @@ func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, erro
 }
 
 const findUserByEmail = `-- name: FindUserByEmail :one
-SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at FROM users WHERE email = $1 LIMIT 1
+SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at, role FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, error) {
@@ -333,12 +326,13 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (User, erro
 		&i.Archived,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Role,
 	)
 	return i, err
 }
 
 const findUserByID = `-- name: FindUserByID :one
-SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at FROM users WHERE id = $1
+SELECT id, email, name, password_hash, verify_token, status, last_login_at, archived, created_at, updated_at, role FROM users WHERE id = $1
 `
 
 func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -355,6 +349,7 @@ func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (User, error) 
 		&i.Archived,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Role,
 	)
 	return i, err
 }

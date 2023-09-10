@@ -64,4 +64,5 @@ type User struct {
 	Archived     bool
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	Role         string
 }

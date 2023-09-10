@@ -1,0 +1,13 @@
+{
+	auto_https off
+	debug
+}
+
+:8080
+
+# Backend
+reverse_proxy /grpc/* localhost:8081
+reverse_proxy /api/* localhost:8081
+
+# NextJS
+reverse_proxy /* localhost:3000

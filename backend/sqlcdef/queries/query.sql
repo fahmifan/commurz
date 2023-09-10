@@ -14,7 +14,7 @@ SELECT * FROM cart_items WHERE cart_id IN (sqlc.slice('cart_ids'));
 SELECT * FROM products WHERE id IN (sqlc.slice('product_ids'));
 
 -- name: FindAllProductStocksByIDs :many
-SELECT * FROM product_stocks WHERE product_id IN (sqlc.slice('product_ids'));
+SELECT * FROM product_stocks WHERE product_id = ANY(@product_ids::TEXT[]);
 
 -- name: SaveCartItem :one
 INSERT INTO cart_items (id, cart_id, product_id, quantity, price) 
