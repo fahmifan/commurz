@@ -1,15 +1,8 @@
 # Commurz
 Commurz is a simple e-commerce system to demonstrate a DDD & Functional Core Imparative Shell approach to build a system.
 
-This system will have 2 distinct modules:
-- frontoffice
-    - This module will be used by the customers.
-- backoffice
-    - This module will be used by the internal teams to manage the system.
-
 ## Table of Contents
 - [Usecases](docs/Usecase.md)
-- [Tech Stack]()
 
 ## Tech Stack
 - Golang
@@ -24,5 +17,4 @@ This system will have 2 distinct modules:
     - the serivce methods can be used directly to build an SSR App
 
 ### TODO
-- [ ] SSR App
 - [ ] add monitoring & tracing
