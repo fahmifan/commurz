@@ -205,7 +205,6 @@ func (service *Service) CreateProduct(
 		return nil, ErrInternal
 	}
 
-	fmt.Println("DEBUG >>> find >>>", product)
 	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
 	if err != nil {
 		logs.ErrCtx(ctx, err, "[CreateProduct] FindProductByID")
@@ -223,6 +222,8 @@ func (service *Service) AddProductStock(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
 ) (res *connect.Response[commurzpbv1.Product], err error) {
+	// TODO: add authz
+
 	productRepo := pkgproduct.ProductReader{}
 	productWriter := pkgproduct.ProductWriter{}
 	product := pkgproduct.Product{}
@@ -269,6 +270,8 @@ func (service *Service) ReduceProductStock(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
 ) (*connect.Response[commurzpbv1.Product], error) {
+	// TODO: add authz
+
 	productReader := pkgproduct.ProductReader{}
 	productWriter := pkgproduct.ProductWriter{}
 

@@ -868,3 +868,152 @@ export class ListBackofficeProductsResponse extends Message<ListBackofficeProduc
   }
 }
 
+/**
+ * @generated from message commurz.v1.ListAppProductsRequest
+ */
+export class ListAppProductsRequest extends Message<ListAppProductsRequest> {
+  /**
+   * @generated from field: commurz.v1.Pagination pagination = 1;
+   */
+  pagination?: Pagination;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<ListAppProductsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.ListAppProductsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "pagination", kind: "message", T: Pagination },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListAppProductsRequest {
+    return new ListAppProductsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListAppProductsRequest {
+    return new ListAppProductsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListAppProductsRequest {
+    return new ListAppProductsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListAppProductsRequest | PlainMessage<ListAppProductsRequest> | undefined, b: ListAppProductsRequest | PlainMessage<ListAppProductsRequest> | undefined): boolean {
+    return proto3.util.equals(ListAppProductsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message commurz.v1.ProductListing
+ */
+export class ProductListing extends Message<ProductListing> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name = "";
+
+  /**
+   * @generated from field: int64 price = 3;
+   */
+  price = protoInt64.zero;
+
+  /**
+   * @generated from field: int64 latest_stock = 4;
+   */
+  latestStock = protoInt64.zero;
+
+  /**
+   * price in text format, e.g. "Rp 10.000"
+   *
+   * @generated from field: string text_price_idr = 5;
+   */
+  textPriceIdr = "";
+
+  constructor(data?: PartialMessage<ProductListing>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.ProductListing";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "price", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 4, name: "latest_stock", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 5, name: "text_price_idr", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ProductListing {
+    return new ProductListing().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ProductListing {
+    return new ProductListing().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ProductListing {
+    return new ProductListing().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ProductListing | PlainMessage<ProductListing> | undefined, b: ProductListing | PlainMessage<ProductListing> | undefined): boolean {
+    return proto3.util.equals(ProductListing, a, b);
+  }
+}
+
+/**
+ * @generated from message commurz.v1.ListAppProductsResponse
+ */
+export class ListAppProductsResponse extends Message<ListAppProductsResponse> {
+  /**
+   * @generated from field: repeated commurz.v1.ProductListing products = 1;
+   */
+  products: ProductListing[] = [];
+
+  /**
+   * @generated from field: int32 count = 2;
+   */
+  count = 0;
+
+  constructor(data?: PartialMessage<ListAppProductsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.ListAppProductsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "products", kind: "message", T: ProductListing, repeated: true },
+    { no: 2, name: "count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListAppProductsResponse {
+    return new ListAppProductsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListAppProductsResponse {
+    return new ListAppProductsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListAppProductsResponse {
+    return new ListAppProductsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListAppProductsResponse | PlainMessage<ListAppProductsResponse> | undefined, b: ListAppProductsResponse | PlainMessage<ListAppProductsResponse> | undefined): boolean {
+    return proto3.util.equals(ListAppProductsResponse, a, b);
+  }
+}
+

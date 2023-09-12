@@ -16,6 +16,8 @@ func (service *Service) ListBackofficeProducts(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.ListBackofficeProductsRequest],
 ) (*connect.Response[commurzpbv1.ListBackofficeProductsResponse], error) {
+	// TODO: add authz
+
 	productReader := pkgproduct.ProductBackofficeReader{}
 
 	arg := NewListProductArg(req.Msg)

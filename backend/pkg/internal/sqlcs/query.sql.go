@@ -16,7 +16,7 @@ import (
 const bumpProductVersion = `-- name: BumpProductVersion :one
 UPDATE products SET version = version + 1 
 WHERE id = $1 AND version = $2
-RETURNING id, name, price, version
+RETURNING id, name, price, version, latest_stock
 `
 
 type BumpProductVersionParams struct {
@@ -32,6 +32,7 @@ func (q *Queries) BumpProductVersion(ctx context.Context, arg BumpProductVersion
 		&i.Name,
 		&i.Price,
 		&i.Version,
+		&i.LatestStock,
 	)
 	return i, err
 }
@@ -201,7 +202,7 @@ func (q *Queries) FindAllProductStocksByIDs(ctx context.Context, productIds []st
 }
 
 const findAllProductsByIDs = `-- name: FindAllProductsByIDs :many
-SELECT id, name, price, version FROM products WHERE id IN ($1)
+SELECT id, name, price, version, latest_stock FROM products WHERE id IN ($1)
 `
 
 func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
@@ -228,6 +229,7 @@ func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string)
 			&i.Name,
 			&i.Price,
 			&i.Version,
+			&i.LatestStock,
 		); err != nil {
 			return nil, err
 		}
@@ -293,7 +295,7 @@ func (q *Queries) FindCartByUserID(ctx context.Context, userID uuid.UUID) (Cart,
 }
 
 const findProductByID = `-- name: FindProductByID :one
-SELECT id, name, price, version FROM products WHERE id = $1
+SELECT id, name, price, version, latest_stock FROM products WHERE id = $1
 `
 
 func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, error) {
@@ -304,6 +306,7 @@ func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, erro
 		&i.Name,
 		&i.Price,
 		&i.Version,
+		&i.LatestStock,
 	)
 	return i, err
 }
@@ -390,7 +393,7 @@ func (q *Queries) SaveCartItem(ctx context.Context, arg SaveCartItemParams) (Car
 const saveProduct = `-- name: SaveProduct :one
 INSERT INTO products (id, name, price)
 VALUES ($1, $2, $3)
-RETURNING id, name, price, version
+RETURNING id, name, price, version, latest_stock
 `
 
 type SaveProductParams struct {
@@ -407,6 +410,7 @@ func (q *Queries) SaveProduct(ctx context.Context, arg SaveProductParams) (Produ
 		&i.Name,
 		&i.Price,
 		&i.Version,
+		&i.LatestStock,
 	)
 	return i, err
 }
@@ -414,26 +418,34 @@ func (q *Queries) SaveProduct(ctx context.Context, arg SaveProductParams) (Produ
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products SET 
     name = $1, 
-    price = $2 
+    price = $2,
+    latest_stock = $3
 WHERE 
-    id = $3 
-RETURNING id, name, price, version
+    id = $4 
+RETURNING id, name, price, version, latest_stock
 `
 
 type UpdateProductParams struct {
-	Name  string
-	Price int64
-	ID    string
+	Name        string
+	Price       int64
+	LatestStock int64
+	ID          string
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, updateProduct, arg.Name, arg.Price, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateProduct,
+		arg.Name,
+		arg.Price,
+		arg.LatestStock,
+		arg.ID,
+	)
 	var i Product
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Price,
 		&i.Version,
+		&i.LatestStock,
 	)
 	return i, err
 }

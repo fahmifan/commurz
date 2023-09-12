@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddProductToCartRequest, Cart, ChangeProductStockRequest, CheckoutAllRequest, CreateProductRequest, FindByIDRequest, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Order, Product, User } from "./commurz_pb.js";
+import { AddProductToCartRequest, Cart, ChangeProductStockRequest, CheckoutAllRequest, CreateProductRequest, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Order, Product, User } from "./commurz_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -32,6 +32,17 @@ export const CommurzService = {
       name: "FindUserByID",
       I: FindByIDRequest,
       O: User,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * app
+     *
+     * @generated from rpc commurz.v1.CommurzService.ListAppProducts
+     */
+    listAppProducts: {
+      name: "ListAppProducts",
+      I: ListAppProductsRequest,
+      O: ListAppProductsResponse,
       kind: MethodKind.Unary,
     },
     /**

@@ -29,7 +29,8 @@ RETURNING *;
 -- name: UpdateProduct :one
 UPDATE products SET 
     name = @name, 
-    price = @price 
+    price = @price,
+    latest_stock = @latest_stock
 WHERE 
     id = @id 
 RETURNING *;

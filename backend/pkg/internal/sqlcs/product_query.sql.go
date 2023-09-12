@@ -10,6 +10,24 @@ import (
 	"database/sql"
 )
 
+const countAllProductsForApp = `-- name: CountAllProductsForApp :one
+SELECT COUNT(*) FROM products
+WHERE 
+    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+`
+
+type CountAllProductsForAppParams struct {
+	SetName bool
+	Name    sql.NullString
+}
+
+func (q *Queries) CountAllProductsForApp(ctx context.Context, arg CountAllProductsForAppParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countAllProductsForApp, arg.SetName, arg.Name)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countAllProductsForBackoffice = `-- name: CountAllProductsForBackoffice :one
 SELECT COUNT(*) FROM products
 WHERE 
@@ -28,8 +46,62 @@ func (q *Queries) CountAllProductsForBackoffice(ctx context.Context, arg CountAl
 	return count, err
 }
 
+const findAllProductsForApp = `-- name: FindAllProductsForApp :many
+
+SELECT id, name, price, version, latest_stock FROM products
+WHERE 
+    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+LIMIT $4
+OFFSET $3
+`
+
+type FindAllProductsForAppParams struct {
+	SetName    bool
+	Name       sql.NullString
+	PageOffset int32
+	PageLimit  int32
+}
+
+// --------------------------------------------------
+// App & Backoffice is seperated since they will
+// diverge later
+// --------------------------------------------------
+func (q *Queries) FindAllProductsForApp(ctx context.Context, arg FindAllProductsForAppParams) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, findAllProductsForApp,
+		arg.SetName,
+		arg.Name,
+		arg.PageOffset,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Price,
+			&i.Version,
+			&i.LatestStock,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findAllProductsForBackoffice = `-- name: FindAllProductsForBackoffice :many
-SELECT id, name, price, version FROM products
+SELECT id, name, price, version, latest_stock FROM products
 WHERE 
     CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
 LIMIT $4
@@ -62,6 +134,7 @@ func (q *Queries) FindAllProductsForBackoffice(ctx context.Context, arg FindAllP
 			&i.Name,
 			&i.Price,
 			&i.Version,
+			&i.LatestStock,
 		); err != nil {
 			return nil, err
 		}

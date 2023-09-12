@@ -112,11 +112,32 @@ message ListBackofficeProductsResponse {
   int32 count = 2;
 }
 
+message ListAppProductsRequest {
+  Pagination pagination = 1;
+  string name = 2;
+}
+
+message ProductListing {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 latest_stock = 4;
+  string text_price_idr = 5; // price in text format, e.g. "Rp 10.000"
+}
+
+message ListAppProductsResponse {
+  repeated ProductListing products = 1;
+  int32 count = 2;
+}
+
 // Service definition
 service CommurzService {
   // user
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
   rpc FindUserByID(FindByIDRequest) returns (User) {}
+
+  // app
+  rpc ListAppProducts(ListAppProductsRequest) returns (ListAppProductsResponse) {}
 
   // backoffice
   rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}

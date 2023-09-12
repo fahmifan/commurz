@@ -6,14 +6,46 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/preloads"
 	"github.com/fahmifan/ulids"
+	"github.com/oklog/ulid/v2"
 	"github.com/samber/lo"
 )
 
 type Count = int64
+
+type ProductListing struct {
+	ID          ulids.ULID
+	Name        string
+	Price       pkgprice.Price
+	Version     int64
+	LatestStock int64
+}
+
+type ProductListingReader struct{}
+
+func (app ProductListingReader) FindAllProducts(ctx context.Context, db *sql.DB, arg sqlcs.FindAllProductsForAppParams) (products []ProductListing, count int64, err error) {
+	query := sqlcs.New(db)
+	xproducts, err := query.FindAllProductsForApp(ctx, arg)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	products = lo.Map(xproducts, func(xproduct sqlcs.Product, _ int) ProductListing {
+		return ProductListing{
+			ID:          ulids.ULID{ULID: ulid.MustParse(xproduct.ID)},
+			Name:        xproduct.Name,
+			Price:       pkgprice.New(xproduct.Price),
+			Version:     xproduct.Version,
+			LatestStock: xproduct.LatestStock,
+		}
+	})
+
+	return
+}
 
 type ProductBackofficeReader struct{}
 
@@ -131,9 +163,10 @@ func (repo ProductWriter) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, prod
 	query := sqlcs.New(tx)
 
 	xproduct, err := query.UpdateProduct(ctx, sqlcs.UpdateProductParams{
-		ID:    product.ID.String(),
-		Name:  product.Name,
-		Price: product.Price.Value(),
+		ID:          product.ID.String(),
+		Name:        product.Name,
+		Price:       product.Price.Value(),
+		LatestStock: product.CurrentStock(),
 	})
 	if err != nil {
 		return Product{}, fmt.Errorf("[UpdateProduct] UpdateProduct: %w", err)

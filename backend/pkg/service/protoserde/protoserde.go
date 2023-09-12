@@ -22,6 +22,22 @@ func FromUserPkg(user pkguser.User) *commurzpbv1.User {
 	}
 }
 
+func ListFromProductListingsPkg(productListings []pkgproduct.ProductListing) []*commurzpbv1.ProductListing {
+	return lo.Map(productListings, func(product pkgproduct.ProductListing, _ int) *commurzpbv1.ProductListing {
+		return FromProductListingPkg(product)
+	})
+}
+
+func FromProductListingPkg(product pkgproduct.ProductListing) *commurzpbv1.ProductListing {
+	return &commurzpbv1.ProductListing{
+		Id:           product.ID.String(),
+		Name:         product.Name,
+		Price:        product.Price.IDR(),
+		LatestStock:  product.LatestStock,
+		TextPriceIdr: product.Price.String(),
+	}
+}
+
 func ListFromProductPkg(products []pkgproduct.Product) []*commurzpbv1.Product {
 	return lo.Map(products, func(product pkgproduct.Product, _ int) *commurzpbv1.Product {
 		return FromProductPkg(product)
