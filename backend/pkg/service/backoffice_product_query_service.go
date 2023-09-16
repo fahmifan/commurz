@@ -10,6 +10,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
+	"github.com/fahmifan/ulids"
 )
 
 func (service *Service) ListBackofficeProducts(
@@ -33,6 +34,32 @@ func (service *Service) ListBackofficeProducts(
 			Products: protoserde.ListFromProductPkg(products),
 			Count:    int32(count),
 		},
+	}
+
+	return res, nil
+}
+
+func (service *Service) FindProductByID(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.FindByIDRequest],
+) (*connect.Response[commurzpbv1.Product], error) {
+	// TODO: add authz
+
+	id, err := ulids.Parse(req.Msg.GetId())
+	if err != nil {
+		logs.ErrCtx(ctx, err, "FindProductByID: Parse")
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	productReader := pkgproduct.ProductReader{}
+	product, err := productReader.FindProductByID(ctx, service.DB, id)
+	if err != nil {
+		logs.ErrCtx(ctx, err, "FindProductByID: FindProductByID")
+		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+	}
+
+	res := &connect.Response[commurzpbv1.Product]{
+		Msg: protoserde.FromProductPkg(product),
 	}
 
 	return res, nil

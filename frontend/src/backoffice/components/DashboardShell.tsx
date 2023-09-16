@@ -1,8 +1,14 @@
 import { AppShell, Header, NavLink, Navbar, Text } from "@mantine/core";
 import { PropsWithChildren } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-export function DashboardShell(props: PropsWithChildren) {
+type Props = PropsWithChildren & {
+    activeTab?: '' | 'products'
+}
+
+export function DashboardShell(props: Props) {
+    const navigate = useNavigate();
+
     return (
         <AppShell
         padding="md"
@@ -13,9 +19,10 @@ export function DashboardShell(props: PropsWithChildren) {
         }
         navbar={
             <Navbar width={{ base: 300 }} height={500} p="xs">
-                <Link to="/backoffice/products" style={{textDecoration: 'none'}}>
-                    <NavLink label="Products" />
-                </Link>
+                <NavLink label="Products" active={props.activeTab === 'products'} onClick={() => {
+                    navigate('/backoffice/products')
+                }}>
+                </NavLink>
             </Navbar>
         }
         styles={(theme) => ({

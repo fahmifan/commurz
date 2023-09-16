@@ -27,9 +27,10 @@ type Product struct {
 
 func productFromSqlc(p sqlcs.Product, index int) Product {
 	return Product{
-		ID:    ulids.ULID{ULID: ulid.MustParse(p.ID)},
-		Name:  p.Name,
-		Price: pkgprice.New(p.Price),
+		ID:      ulids.ULID{ULID: ulid.MustParse(p.ID)},
+		Name:    p.Name,
+		Price:   pkgprice.New(p.Price),
+		Version: p.Version,
 	}
 }
 
@@ -54,7 +55,15 @@ func CreateProduct(name string, productPrice pkgprice.Price) (Product, error) {
 	return product, nil
 }
 
-func (product Product) AddStock(stockIn int64, createdAt time.Time) (Product, ProductStock) {
+func (product Product) SameVersion(version int64) bool {
+	return product.Version == int64(version)
+}
+
+func (product Product) AddStock(stockIn int64, createdAt time.Time) (Product, ProductStock, error) {
+	if stockIn < 0 {
+		return Product{}, ProductStock{}, fmt.Errorf("stock in must be positive")
+	}
+
 	stock := ProductStock{
 		ID:        ulids.New(),
 		ProductID: product.ID,
@@ -63,10 +72,14 @@ func (product Product) AddStock(stockIn int64, createdAt time.Time) (Product, Pr
 	}
 
 	product.Stocks = append(product.Stocks, stock)
-	return product, stock
+	return product, stock, nil
 }
 
 func (product Product) ReduceStock(stockOut int64, createdAt time.Time) (Product, ProductStock, error) {
+	if stockOut < 0 {
+		return Product{}, ProductStock{}, fmt.Errorf("stock out must be positive")
+	}
+
 	if product.CurrentStock() < stockOut {
 		return Product{}, ProductStock{}, ErrInsufficientStock
 	}

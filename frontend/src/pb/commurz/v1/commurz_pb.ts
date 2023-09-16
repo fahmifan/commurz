@@ -88,6 +88,11 @@ export class Product extends Message<Product> {
    */
   textPriceIdr = "";
 
+  /**
+   * @generated from field: int64 version = 6;
+   */
+  version = protoInt64.zero;
+
   constructor(data?: PartialMessage<Product>) {
     super();
     proto3.util.initPartial(data, this);
@@ -101,6 +106,7 @@ export class Product extends Message<Product> {
     { no: 3, name: "price", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 4, name: "current_stock", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
     { no: 5, name: "text_price_idr", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "version", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Product {
@@ -541,6 +547,92 @@ export class ChangeProductStockRequest extends Message<ChangeProductStockRequest
 
   static equals(a: ChangeProductStockRequest | PlainMessage<ChangeProductStockRequest> | undefined, b: ChangeProductStockRequest | PlainMessage<ChangeProductStockRequest> | undefined): boolean {
     return proto3.util.equals(ChangeProductStockRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message commurz.v1.UpdateProductStockRequest
+ */
+export class UpdateProductStockRequest extends Message<UpdateProductStockRequest> {
+  /**
+   * @generated from field: string product_id = 1;
+   */
+  productId = "";
+
+  /**
+   * @generated from field: int64 version = 2;
+   */
+  version = protoInt64.zero;
+
+  /**
+   * @generated from field: int64 stock_in = 3;
+   */
+  stockIn = protoInt64.zero;
+
+  /**
+   * @generated from field: int64 stock_out = 4;
+   */
+  stockOut = protoInt64.zero;
+
+  constructor(data?: PartialMessage<UpdateProductStockRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.UpdateProductStockRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "product_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "version", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 3, name: "stock_in", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 4, name: "stock_out", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateProductStockRequest {
+    return new UpdateProductStockRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateProductStockRequest {
+    return new UpdateProductStockRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateProductStockRequest {
+    return new UpdateProductStockRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateProductStockRequest | PlainMessage<UpdateProductStockRequest> | undefined, b: UpdateProductStockRequest | PlainMessage<UpdateProductStockRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateProductStockRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message commurz.v1.Empty
+ */
+export class Empty extends Message<Empty> {
+  constructor(data?: PartialMessage<Empty>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.Empty";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Empty {
+    return new Empty().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Empty {
+    return new Empty().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Empty {
+    return new Empty().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Empty | PlainMessage<Empty> | undefined, b: Empty | PlainMessage<Empty> | undefined): boolean {
+    return proto3.util.equals(Empty, a, b);
   }
 }
 

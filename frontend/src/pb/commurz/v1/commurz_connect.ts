@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddProductToCartRequest, Cart, ChangeProductStockRequest, CheckoutAllRequest, CreateProductRequest, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Order, Product, User } from "./commurz_pb.js";
+import { AddProductToCartRequest, Cart, ChangeProductStockRequest, CheckoutAllRequest, CreateProductRequest, Empty, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Order, Product, UpdateProductStockRequest, User } from "./commurz_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -59,6 +59,15 @@ export const CommurzService = {
     /**
      * product
      *
+     * @generated from rpc commurz.v1.CommurzService.FindProductByID
+     */
+    findProductByID: {
+      name: "FindProductByID",
+      I: FindByIDRequest,
+      O: Product,
+      kind: MethodKind.Unary,
+    },
+    /**
      * @generated from rpc commurz.v1.CommurzService.CreateProduct
      */
     createProduct: {
@@ -83,6 +92,15 @@ export const CommurzService = {
       name: "ReduceProductStock",
       I: ChangeProductStockRequest,
       O: Product,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc commurz.v1.CommurzService.UpdateProductStock
+     */
+    updateProductStock: {
+      name: "UpdateProductStock",
+      I: UpdateProductStockRequest,
+      O: Empty,
       kind: MethodKind.Unary,
     },
     /**

@@ -240,7 +240,10 @@ func (service *Service) AddProductStock(
 		}
 
 		var stock pkgproduct.ProductStock
-		product, stock = product.AddStock(req.Msg.GetStockQuantity(), time.Now())
+		product, stock, err = product.AddStock(req.Msg.GetStockQuantity(), time.Now())
+		if err != nil {
+			return fmt.Errorf("[AddProductStock] AddStock: %w", err)
+		}
 
 		_, err = productWriter.SaveProductStock(ctx, tx, stock)
 		if err != nil {

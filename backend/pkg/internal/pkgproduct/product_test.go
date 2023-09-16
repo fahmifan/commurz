@@ -17,7 +17,7 @@ func TestCreateProduct(t *testing.T) {
 		product, err := pkgproduct.CreateProduct("product 1", price)
 		require.NoError(t, err)
 
-		product, _ = product.AddStock(1, now)
+		product, _, _ = product.AddStock(1, now)
 		require.True(t, product.HaveStock(1))
 		_, _, err = product.ReduceStock(1, now)
 		require.NoError(t, err)
@@ -27,7 +27,7 @@ func TestCreateProduct(t *testing.T) {
 		product, err := pkgproduct.CreateProduct("product 1", price)
 		require.NoError(t, err)
 
-		product, _ = product.AddStock(1, now)
+		product, _, _ = product.AddStock(1, now)
 
 		_, _, err = product.ReduceStock(3, now)
 		require.ErrorAs(t, err, &pkgproduct.ErrInsufficientStock)

@@ -1,15 +1,16 @@
 import { Button, Group, Loader, Modal, NumberInput, Pagination, Select, Table, TextInput } from "@mantine/core";
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CommurzServiceClient } from "../service";
+import { CommurzServiceClient } from "../../service";
 import { FormEvent, useState } from "react";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 
-import * as pb from '../pb/commurz/v1/commurz_pb'
-import { DashboardShell } from "./components/DashboardShell";
+import * as pb from '../../pb/commurz/v1/commurz_pb'
+import { DashboardShell } from "../components/DashboardShell";
+import { Link, redirect } from "react-router-dom";
 
-export default function BackofficeProducts() {
+export default function PageProducts() {
 	const defaultPageSelection = '10'
 	const pageSelections = ['5', '10', '20', '50']
 	const [name, setName] = useState('')
@@ -83,7 +84,7 @@ export default function BackofficeProducts() {
 		return <Loader />
 	}
 
-	return <DashboardShell>
+	return <DashboardShell activeTab="products">
 		<Group>
 			<Button onClick={openAddProductModal}>Add Product</Button>
 			<TextInput placeholder="Search..." onChange={(ev) => {
@@ -97,6 +98,7 @@ export default function BackofficeProducts() {
 					<th>Name</th>
 					<th>Price</th>
 					<th>Current Stock</th>
+					<th>Actions</th>
 				</tr>
 			</thead>
 			<tbody>{resListProducts?.products.map(prod => (
@@ -104,6 +106,11 @@ export default function BackofficeProducts() {
 					<td>{prod.name}</td>
 					<td>{prod.textPriceIdr}</td>
 					<td>{prod.currentStock.toString()}</td>
+					<td>
+						<Link	to={`/backoffice/products/stocks?product_id=${prod.id}`}>
+							Update Stock
+						</Link>
+					</td>
 				</tr>
 			))}</tbody>
 		</Table>

@@ -8,10 +8,9 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 
-import { MantineProvider, Text, Title } from "@mantine/core";
-import BackofficeProducts from "./backoffice/BackofficeProducts";
+import { MantineProvider } from "@mantine/core";
+import backoffices from "./backoffice";
 import { AppHome } from "./app/AppHome";
-
 
 const router = createBrowserRouter([
   {
@@ -20,7 +19,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/backoffice/products",
-    element: <BackofficeProducts />,
+    element: <backoffices.PageProducts />,
+  },
+  {
+    path: "/backoffice/products/stocks",
+    element: <backoffices.PageAddStock />,
   },
 ]);
 

@@ -106,11 +106,16 @@ func (server *Webserver) getPort() string {
 	return ":" + fmt.Sprint(server.port)
 }
 
-func (s *Webserver) renderAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
+func (s *Webserver) routeAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
 	group.GET("/", hh).Name = "page-index" // login
+
 	group.GET("/backoffice/products", hh, pageMdw.HasAccess([]service.Perm{
 		Perm(auth.Manage, auth.Product),
 	})).Name = "page-backoffice-products"
+
+	group.GET("/backoffice/products/stocks", hh, pageMdw.HasAccess([]service.Perm{
+		Perm(auth.Manage, auth.Product),
+	})).Name = "page-backoffice-products-stocks"
 }
 
 func (s *Webserver) routeFE(ec *echo.Echo, pageMdw *PageMiddleware) error {
@@ -153,7 +158,7 @@ func (s *Webserver) routeDevFE(ec *echo.Echo, pageMdw *PageMiddleware) (err erro
 	viteRenderer := s.renderVite("templates/vite/index.html", viteGlue)
 	reactGroup := s.echo.Group("")
 	{
-		s.renderAllFEs(reactGroup, viteRenderer, pageMdw)
+		s.routeAllFEs(reactGroup, viteRenderer, pageMdw)
 	}
 	return nil
 }

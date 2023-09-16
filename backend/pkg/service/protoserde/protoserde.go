@@ -51,6 +51,7 @@ func FromProductPkg(product pkgproduct.Product) *commurzpbv1.Product {
 		Price:        product.Price.Value(),
 		CurrentStock: product.CurrentStock(),
 		TextPriceIdr: product.Price.String(),
+		Version:      product.Version,
 	}
 }
 

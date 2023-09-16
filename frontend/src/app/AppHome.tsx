@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import { Button, Card, Container, Grid, Text, Title } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommurzServiceClient } from "../service";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -33,5 +33,38 @@ export function AppHome() {
 		},
 	})
 
-  return <Text>Home</Text>;
+	if (isProductLoading) {
+		return <Text>Loading...</Text>
+	}
+
+	if (error) {
+		return alert(error)
+	}
+
+  return <>
+	<Container>
+		<Title>Products</Title>
+		
+		<Grid py="md">
+		{resListProducts?.products.map((product) => {
+			return <>
+				<Grid.Col span={4}>
+					<Card key={product.id} padding="lg" radius="md" withBorder maw={300}>
+						<Card.Section>
+							<img src="https://picsum.photos/300" alt={product.name} />
+						</Card.Section>
+						<Card.Section p="md">
+							<Text size="md">{product.name}</Text>
+							<Text size="md">IDR {product.textPriceIdr}</Text>
+						</Card.Section>
+						<Card.Section p="md">
+							<Button variant="light" fullWidth color="green.9">Buy</Button>
+						</Card.Section>
+					</Card>
+				</Grid.Col>
+			</>
+		})}
+		</Grid>
+	</Container>
+  </>;
 }
