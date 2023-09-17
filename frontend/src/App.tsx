@@ -22,8 +22,8 @@ const router = createBrowserRouter([
     element: <backoffices.PageProducts />,
   },
   {
-    path: "/backoffice/products/stocks",
-    element: <backoffices.PageAddStock />,
+    path: "/backoffice/products/detail",
+    element: <backoffices.PageProductDetail />,
   },
 ]);
 

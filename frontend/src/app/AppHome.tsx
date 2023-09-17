@@ -7,7 +7,7 @@ import * as pb from '../pb/commurz/v1/commurz_pb'
 import { ResultFromPromise } from "../model";
 import { useNavigate } from "react-router-dom";
 
-export function AppHome() {
+export function AppHome(): React.ReactNode {
 	const defaultPageSelection = '10'
 	const [name, setName] = useState('')
 	const [debouncedName] = useDebouncedValue(name, 256);
@@ -68,7 +68,8 @@ export function AppHome() {
 	}
 
 	if (error) {
-		return alert(error)
+		alert(error)
+		return <Text>Error</Text>
 	}
 
 	function getItemInCart() {

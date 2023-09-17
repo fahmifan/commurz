@@ -1,9 +1,9 @@
 import PageProducts from './products/PageProducts'
-import PageAddStock from './products/PageAddStock';
+import PageProductDetail from './products/PageProductDetail';
 
 const backoffices = {
     PageProducts,
-    PageAddStock,
+    PageProductDetail,
 }
 
 export default backoffices;

@@ -113,7 +113,7 @@ func (s *Webserver) routeAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw 
 		Perm(auth.Manage, auth.Product),
 	})).Name = "page-backoffice-products"
 
-	group.GET("/backoffice/products/stocks", hh, pageMdw.HasAccess([]service.Perm{
+	group.GET("/backoffice/products/detail", hh, pageMdw.HasAccess([]service.Perm{
 		Perm(auth.Manage, auth.Product),
 	})).Name = "page-backoffice-products-stocks"
 }

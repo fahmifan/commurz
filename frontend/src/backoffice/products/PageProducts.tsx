@@ -107,7 +107,7 @@ export default function PageProducts() {
 					<td>{prod.textPriceIdr}</td>
 					<td>{prod.currentStock.toString()}</td>
 					<td>
-						<Link	to={`/backoffice/products/stocks?product_id=${prod.id}`}>
+						<Link	to={`/backoffice/products/detail?product_id=${prod.id}`}>
 							Update Stock
 						</Link>
 					</td>

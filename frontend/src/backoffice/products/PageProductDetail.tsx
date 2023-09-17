@@ -2,15 +2,13 @@ import { Anchor, Box, Breadcrumbs, Button, Group, Loader, Modal, NumberInput, Pa
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CommurzServiceClient } from "../../service";
-import { FormEvent, useState } from "react";
-import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { Form, useForm } from "@mantine/form";
 
 import * as pb from '../../pb/commurz/v1/commurz_pb'
 import { DashboardShell } from "../components/DashboardShell";
 import { ResultFromPromise } from "../../model";
 
-export default function PageAddStock() {
+export default function PageProductDetail() {
     const searchParam = new URLSearchParams(window.location.search)
     const productID = searchParam.get('product_id')
     if (!productID) {
@@ -72,6 +70,8 @@ export default function PageAddStock() {
 
         await queryClient.invalidateQueries(['backoffice', 'products', 'id', productID])
         formUpdateProductStock.reset()
+
+        alert('Success add stock')
     }
 
     return <DashboardShell activeTab="">
@@ -95,7 +95,7 @@ export default function PageAddStock() {
         <br />
         <br />
 
-        <Text size="lg" weight="bold">Add Stock</Text>
+        <Text size="lg" weight="bold">Update Stock</Text>
         <Box maw="300px">
             <Form form={formUpdateProductStock} onSubmit={onSubmitUpdateStock}>
                 <Text pt="sm" pb="sm">Current Stock: {resFindProduct?.currentStock.toLocaleString()}</Text>
