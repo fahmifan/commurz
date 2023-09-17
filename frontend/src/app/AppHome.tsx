@@ -115,11 +115,11 @@ export function AppHome() {
 									<img src="https://picsum.photos/300" alt={product.name} />
 								</Card.Section>
 								<Card.Section p="md">
-									<Text size="xl" pb="sm">{product.name}</Text>
-									<Group spacing="xl" align="flex-start">
+									<Text size="xl" weight="bold" pb="sm">{product.name}</Text>
+									<Flex align="flex-start" justify="space-between">
 										<Text size="md">IDR {product.textPriceIdr}</Text>
 										<Text size="md">Stock: {product.currentStock.toString()}</Text>
-									</Group>
+									</Flex>
 								</Card.Section>
 								<Card.Section p="md">
 									<Button variant="light" fullWidth color="green.9"
