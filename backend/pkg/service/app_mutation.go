@@ -3,13 +3,11 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
@@ -183,145 +181,4 @@ func (service *Service) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, user
 	}
 
 	return cart, nil
-}
-
-var (
-	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
-)
-
-func (service *Service) CreateProduct(
-	ctx context.Context,
-	req *connect.Request[commurzpbv1.CreateProductRequest],
-) (res *connect.Response[commurzpbv1.Product], err error) {
-	productRepo := pkgproduct.ProductReader{}
-	productWriter := pkgproduct.ProductWriter{}
-
-	product, err := pkgproduct.CreateProduct(req.Msg.Name, pkgprice.New(req.Msg.Price))
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
-	product, err = productWriter.SaveProduct(ctx, service.DB, product)
-	if err != nil {
-		logs.ErrCtx(ctx, err, "[CreateProduct] SaveProduct")
-		return nil, ErrInternal
-	}
-
-	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
-	if err != nil {
-		logs.ErrCtx(ctx, err, "[CreateProduct] FindProductByID")
-		return nil, ErrInternal
-	}
-
-	res = &connect.Response[commurzpbv1.Product]{
-		Msg: protoserde.FromProductPkg(product),
-	}
-
-	return res, nil
-}
-
-func (service *Service) AddProductStock(
-	ctx context.Context,
-	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
-) (res *connect.Response[commurzpbv1.Product], err error) {
-	// TODO: add authz
-
-	productRepo := pkgproduct.ProductReader{}
-	productWriter := pkgproduct.ProductWriter{}
-	product := pkgproduct.Product{}
-
-	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
-		productID, err := pkgutil.ParseULID(req.Msg.GetProductId())
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] ParseULID: %w", err)
-		}
-
-		product, err = productRepo.FindProductByID(ctx, tx, productID)
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] FindProductByID: %w", err)
-		}
-
-		var stock pkgproduct.ProductStock
-		product, stock, err = product.AddStock(req.Msg.GetStockQuantity(), time.Now())
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] AddStock: %w", err)
-		}
-
-		_, err = productWriter.SaveProductStock(ctx, tx, stock)
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] SaveProductStock: %w", err)
-		}
-
-		_, err = productWriter.BumpProductVersion(ctx, tx, product)
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] BumpProductVersion: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return res, fmt.Errorf("[AddProductStock] Transaction: %w", err)
-	}
-
-	res = &connect.Response[commurzpbv1.Product]{
-		Msg: protoserde.FromProductPkg(product),
-	}
-
-	return
-}
-
-func (service *Service) ReduceProductStock(
-	ctx context.Context,
-	req *connect.Request[commurzpbv1.ChangeProductStockRequest],
-) (*connect.Response[commurzpbv1.Product], error) {
-	// TODO: add authz
-
-	productReader := pkgproduct.ProductReader{}
-	productWriter := pkgproduct.ProductWriter{}
-
-	product := pkgproduct.Product{}
-	productID, err := pkgutil.ParseULID(req.Msg.ProductId)
-	if err != nil {
-		return nil, fmt.Errorf("[ReduceProductStock] ParseULID: %w", err)
-	}
-
-	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
-		product, err = productReader.FindProductByID(ctx, tx, productID)
-		if err != nil {
-			return fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
-		}
-
-		var stock pkgproduct.ProductStock
-		product, stock, err = product.ReduceStock(req.Msg.GetStockQuantity(), time.Now())
-		if err != nil {
-			return fmt.Errorf("[ReduceProductStock] ReduceStock: %w", err)
-		}
-
-		_, err = productWriter.SaveProductStock(ctx, tx, stock)
-		if err != nil {
-			return fmt.Errorf("[ReduceProductStock] SaveProductStock: %w", err)
-		}
-
-		_, err = productWriter.BumpProductVersion(ctx, tx, product)
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] BumpProductVersion: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("[AddProductStock] Transaction: %w", err)
-	}
-
-	product, err = productReader.FindProductByID(ctx, service.DB, productID)
-	if err != nil {
-		return nil, fmt.Errorf("[ReduceProductStock] FindProductByID: %w", err)
-	}
-
-	res := &connect.Response[commurzpbv1.Product]{
-		Msg: protoserde.FromProductPkg(product),
-	}
-
-	return res, nil
 }

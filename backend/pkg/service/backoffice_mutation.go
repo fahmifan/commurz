@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
+	"github.com/fahmifan/commurz/pkg/service/protoserde"
 )
 
 func (service *Service) UpdateProductStock(
@@ -69,4 +71,35 @@ func (service *Service) UpdateProductStock(
 	res = &connect.Response[commurzpbv1.Empty]{}
 
 	return
+}
+
+func (service *Service) CreateProduct(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.CreateProductRequest],
+) (res *connect.Response[commurzpbv1.Product], err error) {
+	productRepo := pkgproduct.ProductReader{}
+	productWriter := pkgproduct.ProductWriter{}
+
+	product, err := pkgproduct.CreateProduct(req.Msg.Name, pkgprice.New(req.Msg.Price))
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	product, err = productWriter.SaveProduct(ctx, service.DB, product)
+	if err != nil {
+		logs.ErrCtx(ctx, err, "[CreateProduct] SaveProduct")
+		return nil, ErrInternal
+	}
+
+	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
+	if err != nil {
+		logs.ErrCtx(ctx, err, "[CreateProduct] FindProductByID")
+		return nil, ErrInternal
+	}
+
+	res = &connect.Response[commurzpbv1.Product]{
+		Msg: protoserde.FromProductPkg(product),
+	}
+
+	return res, nil
 }

@@ -5,6 +5,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
@@ -15,6 +16,10 @@ import (
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 	"github.com/fahmifan/flycasbin/acl"
 	"github.com/google/uuid"
+)
+
+var (
+	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
 )
 
 type Config struct {

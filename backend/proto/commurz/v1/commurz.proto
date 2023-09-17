@@ -157,8 +157,6 @@ service CommurzService {
   // product
   rpc FindProductByID(FindByIDRequest) returns (Product) {}
   rpc CreateProduct(CreateProductRequest) returns (Product) {}
-  rpc AddProductStock(ChangeProductStockRequest) returns (Product) {}
-  rpc ReduceProductStock(ChangeProductStockRequest) returns (Product) {}
   rpc UpdateProductStock(UpdateProductStockRequest) returns (Empty) {}
 
   // cart
