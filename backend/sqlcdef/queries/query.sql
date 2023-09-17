@@ -8,10 +8,10 @@ SELECT * FROM carts WHERE user_id = @user_id;
 SELECT * FROM users WHERE id = @id;
 
 -- name: FindAllCartItemsByCartIDs :many
-SELECT * FROM cart_items WHERE cart_id IN (sqlc.slice('cart_ids'));
+SELECT * FROM cart_items WHERE cart_id = ANY(@cart_ids::TEXT[]);
 
 -- name: FindAllProductsByIDs :many
-SELECT * FROM products WHERE id IN (sqlc.slice('product_ids'));
+SELECT * FROM products WHERE id = ANY(@product_ids::TEXT[]);
 
 -- name: FindAllProductStocksByIDs :many
 SELECT * FROM product_stocks WHERE product_id = ANY(@product_ids::TEXT[]);

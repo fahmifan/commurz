@@ -7,7 +7,6 @@ package sqlcs
 
 import (
 	"context"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -126,21 +125,11 @@ func (q *Queries) DeleteCart(ctx context.Context, id string) error {
 }
 
 const findAllCartItemsByCartIDs = `-- name: FindAllCartItemsByCartIDs :many
-SELECT id, cart_id, product_id, quantity, price FROM cart_items WHERE cart_id IN ($1)
+SELECT id, cart_id, product_id, quantity, price FROM cart_items WHERE cart_id = ANY($1::TEXT[])
 `
 
 func (q *Queries) FindAllCartItemsByCartIDs(ctx context.Context, cartIds []string) ([]CartItem, error) {
-	query := findAllCartItemsByCartIDs
-	var queryParams []interface{}
-	if len(cartIds) > 0 {
-		for _, v := range cartIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:cart_ids*/?", strings.Repeat(",?", len(cartIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:cart_ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	rows, err := q.db.QueryContext(ctx, findAllCartItemsByCartIDs, pq.Array(cartIds))
 	if err != nil {
 		return nil, err
 	}
@@ -202,21 +191,11 @@ func (q *Queries) FindAllProductStocksByIDs(ctx context.Context, productIds []st
 }
 
 const findAllProductsByIDs = `-- name: FindAllProductsByIDs :many
-SELECT id, name, price, version, latest_stock FROM products WHERE id IN ($1)
+SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::TEXT[])
 `
 
 func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
-	query := findAllProductsByIDs
-	var queryParams []interface{}
-	if len(productIds) > 0 {
-		for _, v := range productIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:product_ids*/?", strings.Repeat(",?", len(productIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:product_ids*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	rows, err := q.db.QueryContext(ctx, findAllProductsByIDs, pq.Array(productIds))
 	if err != nil {
 		return nil, err
 	}

@@ -35,6 +35,15 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc commurz.v1.CommurzService.FindUserByToken
+     */
+    findUserByToken: {
+      name: "FindUserByToken",
+      I: Empty,
+      O: User,
+      kind: MethodKind.Unary,
+    },
+    /**
      * app
      *
      * @generated from rpc commurz.v1.CommurzService.ListAppProducts
@@ -43,6 +52,15 @@ export const CommurzService = {
       name: "ListAppProducts",
       I: ListAppProductsRequest,
       O: ListAppProductsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc commurz.v1.CommurzService.FindCartByUserToken
+     */
+    findCartByUserToken: {
+      name: "FindCartByUserToken",
+      I: Empty,
+      O: Cart,
       kind: MethodKind.Unary,
     },
     /**

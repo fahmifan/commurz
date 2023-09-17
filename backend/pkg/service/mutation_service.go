@@ -107,18 +107,19 @@ func (service *Service) AddProductToCart(
 ) (*connect.Response[commurzpbv1.Cart], error) {
 	userID, err := uuid.Parse(req.Msg.GetUserId())
 	if err != nil {
-		return nil, fmt.Errorf("[AddItemToCart] parse userID: %w", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	productID, err := pkgutil.ParseULID(req.Msg.ProductId)
 	if err != nil {
-		return nil, fmt.Errorf("[AddItemToCart] parse productID: %w", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	cartWriter := pkgorder.CartWriter{}
 	cart, err := service.getOrCreateCart(ctx, service.DB, userID)
 	if err != nil {
-		return nil, fmt.Errorf("[AddItemToCart] getOrCreateCart: %w", err)
+		logs.ErrCtx(ctx, err, "[AddProductToCart] getOrCreateCart")
+		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
 	}
 
 	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
@@ -144,7 +145,8 @@ func (service *Service) AddProductToCart(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("[AddItemToCart] Transaction: %w", err)
+		logs.ErrCtx(ctx, err, "[AddProductToCart] Transaction")
+		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
 	}
 
 	res := &connect.Response[commurzpbv1.Cart]{

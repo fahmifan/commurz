@@ -2,6 +2,7 @@
 SELECT * FROM products
 WHERE 
     CASE WHEN @set_name::bool THEN ("name" LIKE '%' || @name || '%') ELSE TRUE END
+ORDER BY id DESC
 LIMIT @page_limit
 OFFSET @page_offset;
 
@@ -19,6 +20,7 @@ WHERE
 SELECT * FROM products
 WHERE 
     CASE WHEN @set_name::bool THEN ("name" LIKE '%' || @name || '%') ELSE TRUE END
+ORDER BY id DESC
 LIMIT @page_limit
 OFFSET @page_offset;
 

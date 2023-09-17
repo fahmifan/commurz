@@ -20,7 +20,7 @@ func TestCart_AddItem(t *testing.T) {
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
 		require.NoError(t, err)
 
-		prod1, _ = prod1.AddStock(10, now)
+		prod1, _, _ = prod1.AddStock(10, now)
 		require.Equal(t, int64(10), prod1.CurrentStock())
 
 		cart, item, err := cart.AddItem(prod1, 1)
@@ -37,7 +37,7 @@ func TestCart_AddItem(t *testing.T) {
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
 		require.NoError(t, err)
 
-		prod1, _ = prod1.AddStock(10, now)
+		prod1, _, _ = prod1.AddStock(10, now)
 		require.Equal(t, int64(10), prod1.CurrentStock())
 
 		_, _, err = cart.AddItem(prod1, 11)
@@ -56,7 +56,7 @@ func TestCart_RemoveItem(t *testing.T) {
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
 		require.NoError(t, err)
 
-		prod1, _ = prod1.AddStock(10, now)
+		prod1, _, _ = prod1.AddStock(10, now)
 		require.Equal(t, int64(10), prod1.CurrentStock())
 
 		cart, item, err := cart.AddItem(prod1, 1)
@@ -83,7 +83,7 @@ func TestCart_RemoveItem(t *testing.T) {
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
 		require.NoError(t, err)
 
-		prod1, _ = prod1.AddStock(10, now)
+		prod1, _, _ = prod1.AddStock(10, now)
 		require.Equal(t, int64(10), prod1.CurrentStock())
 
 		cart, _, err = cart.AddItem(prod1, 1)
@@ -103,7 +103,7 @@ func TestCart_CheckoutAll(t *testing.T) {
 		prod1, err := pkgproduct.CreateProduct("prod1", pkgprice.New(1_000))
 		require.NoError(t, err)
 
-		prod1, _ = prod1.AddStock(10, now)
+		prod1, _, _ = prod1.AddStock(10, now)
 		require.Equal(t, int64(10), prod1.CurrentStock())
 
 		cart, _, err = cart.AddItem(prod1, 1)

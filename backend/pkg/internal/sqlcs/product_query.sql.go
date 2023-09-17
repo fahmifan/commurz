@@ -51,6 +51,7 @@ const findAllProductsForApp = `-- name: FindAllProductsForApp :many
 SELECT id, name, price, version, latest_stock FROM products
 WHERE 
     CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+ORDER BY id DESC
 LIMIT $4
 OFFSET $3
 `
@@ -104,6 +105,7 @@ const findAllProductsForBackoffice = `-- name: FindAllProductsForBackoffice :man
 SELECT id, name, price, version, latest_stock FROM products
 WHERE 
     CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+ORDER BY id DESC
 LIMIT $4
 OFFSET $3
 `

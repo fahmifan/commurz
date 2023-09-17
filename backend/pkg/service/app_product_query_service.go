@@ -4,10 +4,13 @@ import (
 	"context"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
+	"github.com/google/uuid"
 )
 
 func (service *Service) ListAppProducts(
@@ -29,4 +32,51 @@ func (service *Service) ListAppProducts(
 		},
 	}
 	return
+}
+
+func (service *Service) FindCartByUserToken(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.Empty],
+) (res *connect.Response[commurzpbv1.Cart], err error) {
+	user, ok := UserFromCtx(ctx)
+	if !ok {
+		return &connect.Response[commurzpbv1.Cart]{}, nil
+	}
+
+	userID, err := uuid.Parse(user.GUID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+	}
+
+	cartReader := pkgorder.CartReader{}
+	cart, err := cartReader.FindCartByUserID(ctx, service.DB, userID)
+	if err != nil {
+		logs.ErrCtx(ctx, err, "FindCartByUserToken: FindCartByUserID")
+		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+	}
+
+	res = &connect.Response[commurzpbv1.Cart]{
+		Msg: protoserde.FromCartPkg(cart),
+	}
+
+	return res, nil
+}
+
+func (service *Service) FindUserByToken(
+	ctx context.Context,
+	req *connect.Request[commurzpbv1.Empty],
+) (res *connect.Response[commurzpbv1.User], err error) {
+	user, ok := UserFromCtx(ctx)
+	if !ok {
+		return &connect.Response[commurzpbv1.User]{}, nil
+	}
+
+	res = &connect.Response[commurzpbv1.User]{
+		Msg: &commurzpbv1.User{
+			Id:    user.GUID,
+			Email: user.Email,
+		},
+	}
+
+	return res, nil
 }

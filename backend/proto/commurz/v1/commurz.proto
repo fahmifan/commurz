@@ -145,9 +145,11 @@ service CommurzService {
   // user
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
   rpc FindUserByID(FindByIDRequest) returns (User) {}
+  rpc FindUserByToken(Empty) returns (User) {}
 
   // app
   rpc ListAppProducts(ListAppProductsRequest) returns (ListAppProductsResponse) {}
+  rpc FindCartByUserToken(Empty) returns (Cart) {}
 
   // backoffice
   rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}

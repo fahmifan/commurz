@@ -57,6 +57,10 @@ func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs
 		return nil, fmt.Errorf("[FindCartItemsByIDs] FindAllCartItemsByCartIDs: %w", err)
 	}
 
+	if len(xitems) == 0 {
+		return nil, nil
+	}
+
 	items := lo.Map(xitems, cartItemFromSqlc)
 	productIDs := lo.Map(items, func(item CartItem, index int) ulids.ULID { return item.ProductID })
 	items, err = preloads.Preload[CartItem, pkgproduct.Product, ulids.ULID]{
