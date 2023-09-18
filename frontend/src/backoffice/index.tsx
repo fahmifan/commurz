@@ -1,9 +1,2 @@
-import PageProducts from './products/PageProducts'
-import PageProductDetail from './products/PageProductDetail';
-
-const backoffices = {
-    PageProducts,
-    PageProductDetail,
-}
-
-export default backoffices;
+export * from './products/PageProducts'
+export * from './products/PageProductDetail';

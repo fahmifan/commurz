@@ -8,7 +8,7 @@ import * as pb from '../../pb/commurz/v1/commurz_pb'
 import { DashboardShell } from "../components/DashboardShell";
 import { ResultFromPromise } from "../../model";
 
-export default function PageProductDetail() {
+export function PageProductDetail() {
     const searchParam = new URLSearchParams(window.location.search)
     const productID = searchParam.get('product_id')
     if (!productID) {

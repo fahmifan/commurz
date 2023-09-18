@@ -9,13 +9,17 @@ import {
 } from '@tanstack/react-query'
 
 import { MantineProvider } from "@mantine/core";
-import backoffices from "./backoffice";
-import { AppHome } from "./app/AppHome";
+import * as backoffices from "./backoffice/index";
+import * as app from "./app/index";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <AppHome />
+    element: <app.AppHome />
+  },
+  {
+    path: "/checkout",
+    element: <app.AppCheckout />
   },
   {
     path: "/backoffice/products",

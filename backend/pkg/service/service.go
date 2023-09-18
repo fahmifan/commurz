@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
@@ -20,6 +21,7 @@ import (
 
 var (
 	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
+	ErrNotFound = connect.NewError(connect.CodeNotFound, errors.New("not found"))
 )
 
 type Config struct {
@@ -31,6 +33,10 @@ var _ commurzv1connect.CommurzServiceHandler = &Service{}
 
 type Service struct {
 	*Config
+}
+
+func init() {
+	pkgprice.Divider = 100
 }
 
 func NewService(config *Config) *Service {

@@ -101,7 +101,7 @@ func (CartWriter) SaveCartItem(ctx context.Context, tx sqlcs.DBTX, cartItem Cart
 	xcartItem, err := query.SaveCartItem(ctx, sqlcs.SaveCartItemParams{
 		CartID:    cartItem.CartID.String(),
 		ID:        cartItem.ID.String(),
-		Price:     cartItem.ProductPrice.IDR(),
+		Price:     cartItem.ProductPrice.Value(),
 		ProductID: cartItem.ProductID.String(),
 		Quantity:  cartItem.Quantity,
 	})
@@ -119,6 +119,9 @@ func (CartWriter) SaveCartItem(ctx context.Context, tx sqlcs.DBTX, cartItem Cart
 
 func (CartWriter) DeleteCart(ctx context.Context, tx sqlcs.DBTX, cart Cart) error {
 	query := sqlcs.New(tx)
+
+	itemIDs := lo.Map(cart.Items, func(item CartItem, index int) ulids.ULID { return item.ID })
+	query.DeleteAllCartItem(ctx, pkgutil.StringULIDs(itemIDs))
 
 	err := query.DeleteCart(ctx, cart.ID.String())
 	if err != nil {

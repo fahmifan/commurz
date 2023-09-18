@@ -45,14 +45,17 @@ func (service *Service) FindCartByUserToken(
 
 	userID, err := uuid.Parse(user.GUID)
 	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+		return nil, ErrInternal
 	}
 
 	cartReader := pkgorder.CartReader{}
 	cart, err := cartReader.FindCartByUserID(ctx, service.DB, userID)
+	if isNotFoundErr(err) {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		logs.ErrCtx(ctx, err, "FindCartByUserToken: FindCartByUserID")
-		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+		return nil, ErrInternal
 	}
 
 	res = &connect.Response[commurzpbv1.Cart]{

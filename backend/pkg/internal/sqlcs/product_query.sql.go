@@ -8,7 +8,33 @@ package sqlcs
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
 )
+
+const bumpProductVersion = `-- name: BumpProductVersion :one
+UPDATE products SET version = version + 1 
+WHERE id = $1 AND version = $2
+RETURNING id, name, price, version, latest_stock
+`
+
+type BumpProductVersionParams struct {
+	ID             string
+	CurrentVersion int64
+}
+
+func (q *Queries) BumpProductVersion(ctx context.Context, arg BumpProductVersionParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, bumpProductVersion, arg.ID, arg.CurrentVersion)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
+}
 
 const countAllProductsForApp = `-- name: CountAllProductsForApp :one
 SELECT COUNT(*) FROM products
@@ -44,6 +70,103 @@ func (q *Queries) CountAllProductsForBackoffice(ctx context.Context, arg CountAl
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createProductStock = `-- name: CreateProductStock :one
+INSERT INTO product_stocks (id, product_id, stock_in, stock_out)
+VALUES ($1, $2, $3, $4)
+RETURNING id, product_id, stock_in, stock_out, created_at
+`
+
+type CreateProductStockParams struct {
+	ID        string
+	ProductID string
+	StockIn   int64
+	StockOut  int64
+}
+
+func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStockParams) (ProductStock, error) {
+	row := q.db.QueryRowContext(ctx, createProductStock,
+		arg.ID,
+		arg.ProductID,
+		arg.StockIn,
+		arg.StockOut,
+	)
+	var i ProductStock
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.StockIn,
+		&i.StockOut,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const findAllProductStocksByIDs = `-- name: FindAllProductStocksByIDs :many
+SELECT id, product_id, stock_in, stock_out, created_at FROM product_stocks WHERE product_id = ANY($1::TEXT[])
+`
+
+func (q *Queries) FindAllProductStocksByIDs(ctx context.Context, productIds []string) ([]ProductStock, error) {
+	rows, err := q.db.QueryContext(ctx, findAllProductStocksByIDs, pq.Array(productIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductStock
+	for rows.Next() {
+		var i ProductStock
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.StockIn,
+			&i.StockOut,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findAllProductsByIDs = `-- name: FindAllProductsByIDs :many
+SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::TEXT[])
+`
+
+func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, findAllProductsByIDs, pq.Array(productIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Price,
+			&i.Version,
+			&i.LatestStock,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const findAllProductsForApp = `-- name: FindAllProductsForApp :many
@@ -149,4 +272,81 @@ func (q *Queries) FindAllProductsForBackoffice(ctx context.Context, arg FindAllP
 		return nil, err
 	}
 	return items, nil
+}
+
+const findProductByID = `-- name: FindProductByID :one
+SELECT id, name, price, version, latest_stock FROM products WHERE id = $1
+`
+
+func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, error) {
+	row := q.db.QueryRowContext(ctx, findProductByID, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
+}
+
+const saveProduct = `-- name: SaveProduct :one
+INSERT INTO products (id, name, price)
+VALUES ($1, $2, $3)
+RETURNING id, name, price, version, latest_stock
+`
+
+type SaveProductParams struct {
+	ID    string
+	Name  string
+	Price int64
+}
+
+func (q *Queries) SaveProduct(ctx context.Context, arg SaveProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, saveProduct, arg.ID, arg.Name, arg.Price)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products SET 
+    name = $1, 
+    price = $2,
+    latest_stock = $3
+WHERE 
+    id = $4 
+RETURNING id, name, price, version, latest_stock
+`
+
+type UpdateProductParams struct {
+	Name        string
+	Price       int64
+	LatestStock int64
+	ID          string
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, updateProduct,
+		arg.Name,
+		arg.Price,
+		arg.LatestStock,
+		arg.ID,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
 }

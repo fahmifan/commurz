@@ -10,7 +10,7 @@ import * as pb from '../../pb/commurz/v1/commurz_pb'
 import { DashboardShell } from "../components/DashboardShell";
 import { Link, redirect } from "react-router-dom";
 
-export default function PageProducts() {
+export function PageProducts() {
 	const defaultPageSelection = '10'
 	const pageSelections = ['5', '10', '20', '50']
 	const [name, setName] = useState('')

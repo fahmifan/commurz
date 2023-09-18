@@ -8,7 +8,6 @@ import (
 
 	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	products "github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
@@ -59,13 +58,14 @@ func (cart Cart) CheckoutAll(newOrderNumber OrderNumber, now time.Time) (_ Cart,
 		return Cart{}, Order{}, nil, fmt.Errorf("[CheckoutAll] out of stock: %w", ErrOutOfStock)
 	}
 
-	cart, items, checkedoutStocks, err := cart.makeOrderItems(now)
+	newOrderID := ulids.New()
+	cart, items, checkedoutStocks, err := cart.makeOrderItems(newOrderID, now)
 	if err != nil {
 		return Cart{}, Order{}, nil, fmt.Errorf("[CheckoutAll] make order items: %w", err)
 	}
 
 	order = Order{
-		ID:     ulids.New(),
+		ID:     newOrderID,
 		UserID: cart.UserID,
 		Number: newOrderNumber,
 		Status: OrderStatusPendingPayment,
@@ -83,7 +83,7 @@ func (cart Cart) isAllItemsHaveStocks() bool {
 
 const maxCartItems = 99
 
-func (cart Cart) AddItem(product products.Product, qty int64) (Cart, CartItem, error) {
+func (cart Cart) AddItem(product pkgproduct.Product, qty int64) (Cart, CartItem, error) {
 	if len(cart.Items) >= maxCartItems {
 		return Cart{}, CartItem{}, ErrCartIsFull
 	}
@@ -96,15 +96,28 @@ func (cart Cart) AddItem(product products.Product, qty int64) (Cart, CartItem, e
 		return Cart{}, CartItem{}, ErrOutOfStock
 	}
 
-	cartItem := CartItem{
-		ID:           ulids.New(),
-		CartID:       cart.ID,
-		ProductID:    product.ID,
-		Quantity:     qty,
-		ProductPrice: product.Price,
-		Product:      product,
+	cart.Items = lo.Map(cart.Items, func(item CartItem, _ int) CartItem {
+		if item.ProductID != product.ID {
+			return item
+		}
+
+		item.Quantity += qty
+		return item
+	})
+
+	cartItem, ok := lo.Find(cart.Items, func(item CartItem) bool {
+		return item.ProductID == product.ID
+	})
+	if !ok {
+		cartItem = CartItem{
+			ID:           ulids.New(),
+			CartID:       cart.ID,
+			ProductID:    product.ID,
+			Quantity:     qty,
+			ProductPrice: product.Price,
+			Product:      product,
+		}
 	}
-	cart.Items = append(cart.Items, cartItem)
 
 	return cart, cartItem, nil
 }
@@ -128,9 +141,7 @@ func (cart Cart) RemoveItem(id ulids.ULID) (Cart, CartItem, error) {
 	return cart, removedItem, nil
 }
 
-func (cart Cart) makeOrderItems(now time.Time) (_ Cart, items []OrderItem, checkoutStocks []pkgproduct.ProductStock, err error) {
-	orderID := ulids.New()
-
+func (cart Cart) makeOrderItems(orderID ulids.ULID, now time.Time) (_ Cart, items []OrderItem, checkoutStocks []pkgproduct.ProductStock, err error) {
 	checkoutStocks = make([]pkgproduct.ProductStock, len(cart.Items))
 	for i := range cart.Items {
 		products, reduceStock, err := cart.Items[i].Product.ReduceStock(cart.Items[i].Quantity, now)
@@ -166,7 +177,7 @@ type CartItem struct {
 	// ProductPrice is price per product that will be used when checkout
 	ProductPrice pkgprice.Price `json:"product_price" db:"product_price"`
 
-	Product products.Product `json:"product" db:"-"`
+	Product pkgproduct.Product `json:"product" db:"-"`
 }
 
 func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
@@ -213,8 +224,8 @@ func (order Order) TotalPrice() pkgprice.Price {
 	return totalPrice
 }
 
-func (order Order) Products() []products.Product {
-	products := lo.Map(order.Items, func(item OrderItem, index int) products.Product {
+func (order Order) Products() []pkgproduct.Product {
+	products := lo.Map(order.Items, func(item OrderItem, index int) pkgproduct.Product {
 		return item.Product
 	})
 
@@ -230,7 +241,7 @@ type OrderItem struct {
 	Price     pkgprice.Price
 	Quantity  int64
 
-	Product products.Product
+	Product pkgproduct.Product
 }
 
 func orderItemFromSqlc(xorderItem sqlcs.OrderItem, idx int) OrderItem {

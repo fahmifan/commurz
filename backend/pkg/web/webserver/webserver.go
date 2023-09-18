@@ -107,7 +107,7 @@ func (server *Webserver) getPort() string {
 }
 
 func (s *Webserver) routeAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
-	group.GET("/", hh).Name = "page-index" // login
+	group.GET("*", hh).Name = "page-fe-catch-all" // login
 
 	group.GET("/backoffice/products", hh, pageMdw.HasAccess([]service.Perm{
 		Perm(auth.Manage, auth.Product),

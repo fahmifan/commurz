@@ -9,7 +9,81 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
+
+const createCart = `-- name: CreateCart :one
+INSERT INTO carts (id, user_id)
+VALUES ($1, $2)
+RETURNING id, user_id
+`
+
+type CreateCartParams struct {
+	ID     string
+	UserID uuid.UUID
+}
+
+func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
+	row := q.db.QueryRowContext(ctx, createCart, arg.ID, arg.UserID)
+	var i Cart
+	err := row.Scan(&i.ID, &i.UserID)
+	return i, err
+}
+
+const deleteAllCartItem = `-- name: DeleteAllCartItem :exec
+DELETE FROM cart_items WHERE id = ANY($1::TEXT[])
+`
+
+func (q *Queries) DeleteAllCartItem(ctx context.Context, id []string) error {
+	_, err := q.db.ExecContext(ctx, deleteAllCartItem, pq.Array(id))
+	return err
+}
+
+const deleteCart = `-- name: DeleteCart :exec
+DELETE FROM carts WHERE id = $1
+`
+
+func (q *Queries) DeleteCart(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteCart, id)
+	return err
+}
+
+const findAllCartItemsByCartIDs = `-- name: FindAllCartItemsByCartIDs :many
+
+SELECT id, cart_id, product_id, quantity, price FROM cart_items WHERE cart_id = ANY($1::TEXT[])
+`
+
+// ------------------------------------------------
+// Query
+// ------------------------------------------------
+func (q *Queries) FindAllCartItemsByCartIDs(ctx context.Context, cartIds []string) ([]CartItem, error) {
+	rows, err := q.db.QueryContext(ctx, findAllCartItemsByCartIDs, pq.Array(cartIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CartItem
+	for rows.Next() {
+		var i CartItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.CartID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.Price,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const findOrderByID = `-- name: FindOrderByID :one
 SELECT id, user_id, number FROM orders WHERE id = $1
@@ -53,6 +127,45 @@ func (q *Queries) FindOrderItemsByOrderID(ctx context.Context, orderID string) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const saveCartItem = `-- name: SaveCartItem :one
+
+INSERT INTO cart_items (id, cart_id, product_id, quantity, price) 
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (id) DO UPDATE
+    SET quantity = $4, price = $5
+RETURNING id, cart_id, product_id, quantity, price
+`
+
+type SaveCartItemParams struct {
+	ID        string
+	CartID    string
+	ProductID string
+	Quantity  int64
+	Price     int64
+}
+
+// ------------------------------------------------
+// Mutation
+// ------------------------------------------------
+func (q *Queries) SaveCartItem(ctx context.Context, arg SaveCartItemParams) (CartItem, error) {
+	row := q.db.QueryRowContext(ctx, saveCartItem,
+		arg.ID,
+		arg.CartID,
+		arg.ProductID,
+		arg.Quantity,
+		arg.Price,
+	)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.CartID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.Price,
+	)
+	return i, err
 }
 
 const saveOrder = `-- name: SaveOrder :one
