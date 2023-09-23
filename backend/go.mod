@@ -2,7 +2,7 @@ module github.com/fahmifan/commurz
 
 go 1.21
 
-replace github.com/fahmifan/authme => ../../authme
+replace github.com/fahmifan/authme => github.com/fahmifan/authme v0.0.0-20230923020252-412187dc034f
 
 // 7ce29a51
 replace github.com/torenware/vite-go => github.com/fahmifan/vite-go v0.0.0-20230827061318-7ce29a515d1d
@@ -16,13 +16,13 @@ require (
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.3.0
-	github.com/gorilla/sessions v1.2.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lib/pq v1.10.9
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.29.1
+	github.com/rubenv/sql-migrate v1.5.2
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
 	github.com/torenware/vite-go v0.5.6
@@ -46,6 +46,7 @@ require (
 	github.com/gorilla/csrf v1.7.1 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20180606194806-57d518f124b0 // indirect
@@ -60,7 +61,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rubenv/sql-migrate v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect

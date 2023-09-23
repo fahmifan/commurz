@@ -20,6 +20,8 @@ github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSV
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/fahmifan/authme v0.0.0-20230923020252-412187dc034f h1:9c8+BWoEoWQAP5riJX9u/ToS8D/oe3rG8kvdfaB2WJc=
+github.com/fahmifan/authme v0.0.0-20230923020252-412187dc034f/go.mod h1:KjPIj43MeS9E0egAepmtGJy71PtQuzrCn4cSr1f0/d4=
 github.com/fahmifan/flycasbin v0.0.0-20220115024912-e54fb8eeed0a h1:bXVABSY/3+EpzFwqJeCB2XuMvSZKuuXVvIG71qFykN4=
 github.com/fahmifan/flycasbin v0.0.0-20220115024912-e54fb8eeed0a/go.mod h1:4k2yihEMZ2AwscfrczzGbMLjRgzA5k8tLGFS5t0kAXQ=
 github.com/fahmifan/ulids v1.1.0 h1:Mc81ilaOAlCE3jkbSEIJFKaFuQUbcphK3/Zn+cw1WPY=
