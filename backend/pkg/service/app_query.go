@@ -5,12 +5,12 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/auth"
-	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/core/pkgorder"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/logs"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/google/uuid"
 )
 

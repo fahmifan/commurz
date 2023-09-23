@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkguser"
-	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
+	"github.com/fahmifan/commurz/pkg/core/pkguser"
+	"github.com/fahmifan/commurz/pkg/parseutil"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -35,7 +35,7 @@ type Cart struct {
 
 func cartFromSqlc(xcart sqlcs.Cart) Cart {
 	return Cart{
-		ID:     pkgutil.WeakParseULID(xcart.ID),
+		ID:     parseutil.WeakParseULID(xcart.ID),
 		UserID: xcart.UserID,
 	}
 }
@@ -182,9 +182,9 @@ type CartItem struct {
 
 func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
 	return CartItem{
-		ID:           pkgutil.WeakParseULID(xcartItem.ID),
-		CartID:       pkgutil.WeakParseULID(xcartItem.CartID),
-		ProductID:    pkgutil.WeakParseULID(xcartItem.ProductID),
+		ID:           parseutil.WeakParseULID(xcartItem.ID),
+		CartID:       parseutil.WeakParseULID(xcartItem.CartID),
+		ProductID:    parseutil.WeakParseULID(xcartItem.ProductID),
 		Quantity:     xcartItem.Quantity,
 		ProductPrice: pkgprice.New(xcartItem.Price),
 	}
@@ -209,7 +209,7 @@ type Order struct {
 
 func orderFromSqlc(xorder sqlcs.Order) Order {
 	return Order{
-		ID:     pkgutil.WeakParseULID(xorder.ID),
+		ID:     parseutil.WeakParseULID(xorder.ID),
 		UserID: xorder.UserID,
 		Number: OrderNumber(xorder.Number),
 	}
@@ -246,10 +246,10 @@ type OrderItem struct {
 
 func orderItemFromSqlc(xorderItem sqlcs.OrderItem, idx int) OrderItem {
 	return OrderItem{
-		ID:        pkgutil.WeakParseULID(xorderItem.ID),
-		OrderID:   pkgutil.WeakParseULID(xorderItem.OrderID),
+		ID:        parseutil.WeakParseULID(xorderItem.ID),
+		OrderID:   parseutil.WeakParseULID(xorderItem.OrderID),
 		Price:     pkgprice.New(xorderItem.Price),
 		Quantity:  xorderItem.Quantity,
-		ProductID: pkgutil.WeakParseULID(xorderItem.ProductID),
+		ProductID: parseutil.WeakParseULID(xorderItem.ProductID),
 	}
 }

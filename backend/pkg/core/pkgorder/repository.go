@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkguser"
-	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
+	"github.com/fahmifan/commurz/pkg/core/pkguser"
+	"github.com/fahmifan/commurz/pkg/parseutil"
 	"github.com/fahmifan/commurz/pkg/preloads"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -52,7 +52,7 @@ func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs
 
 	productRader := pkgproduct.ProductReader{}
 
-	xitems, err := query.FindAllCartItemsByCartIDs(ctx, pkgutil.StringULIDs(cartIDs))
+	xitems, err := query.FindAllCartItemsByCartIDs(ctx, parseutil.StringULIDs(cartIDs))
 	if err != nil {
 		return nil, fmt.Errorf("[FindCartItemsByIDs] FindAllCartItemsByCartIDs: %w", err)
 	}
@@ -121,7 +121,7 @@ func (CartWriter) DeleteCart(ctx context.Context, tx sqlcs.DBTX, cart Cart) erro
 	query := sqlcs.New(tx)
 
 	itemIDs := lo.Map(cart.Items, func(item CartItem, index int) ulids.ULID { return item.ID })
-	query.DeleteAllCartItem(ctx, pkgutil.StringULIDs(itemIDs))
+	query.DeleteAllCartItem(ctx, parseutil.StringULIDs(itemIDs))
 
 	err := query.DeleteCart(ctx, cart.ID.String())
 	if err != nil {

@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
+	"github.com/fahmifan/commurz/pkg/core/pkgorder"
+	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
 	"github.com/fahmifan/ulids"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

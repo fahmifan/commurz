@@ -3,7 +3,7 @@ package pkgprice_test
 import (
 	"testing"
 
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgprice"
 	"github.com/stretchr/testify/require"
 )
 

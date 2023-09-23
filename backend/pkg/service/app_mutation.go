@@ -8,13 +8,13 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/auth"
-	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/core/pkgorder"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/logs"
+	"github.com/fahmifan/commurz/pkg/parseutil"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/google/uuid"
 )
@@ -114,7 +114,7 @@ func (service *Service) AddProductToCart(
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	productID, err := pkgutil.ParseULID(req.Msg.ProductId)
+	productID, err := parseutil.ParseULID(req.Msg.ProductId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}

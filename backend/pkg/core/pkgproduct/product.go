@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
 )

@@ -1,9 +1,9 @@
 package protoserde
 
 import (
-	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkguser"
+	"github.com/fahmifan/commurz/pkg/core/pkgorder"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
+	"github.com/fahmifan/commurz/pkg/core/pkguser"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/samber/lo"
 )

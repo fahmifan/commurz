@@ -11,7 +11,7 @@ import (
 	"github.com/fahmifan/authme/backend/httphandler"
 	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/config"
-	"github.com/fahmifan/commurz/pkg/internal/pkguser"
+	"github.com/fahmifan/commurz/pkg/core/pkguser"
 	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/pb/commurz/v1/commurzv1connect"
 	"github.com/fahmifan/commurz/pkg/service"

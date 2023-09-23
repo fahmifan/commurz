@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
+	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/flycasbin/acl"
 	"github.com/google/uuid"
 	"github.com/samber/lo"

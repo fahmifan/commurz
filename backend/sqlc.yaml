@@ -6,4 +6,4 @@ sql:
     gen:
       go:
         package: "sqlcs"
-        out: "pkg/internal/sqlcs"
+        out: "pkg/sqlcs"

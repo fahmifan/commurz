@@ -8,10 +8,10 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/fahmifan/commurz/pkg/auth"
-	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
-	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
+	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/logs"
+	"github.com/fahmifan/commurz/pkg/parseutil"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
 	"github.com/fahmifan/commurz/pkg/service/protoserde"
 )
@@ -29,7 +29,7 @@ func (service *Service) UpdateProductStock(
 	product := pkgproduct.Product{}
 
 	err = Transaction(ctx, service.DB, func(tx *sql.Tx) error {
-		productID, err := pkgutil.ParseULID(req.Msg.GetProductId())
+		productID, err := parseutil.ParseULID(req.Msg.GetProductId())
 		if err != nil {
 			return fmt.Errorf("[AddProductStock] ParseULID: %w", err)
 		}
