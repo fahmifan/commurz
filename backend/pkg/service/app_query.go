@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
@@ -38,7 +39,7 @@ func (service *Service) FindCartByUserToken(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.Empty],
 ) (res *connect.Response[commurzpbv1.Cart], err error) {
-	user, ok := UserFromCtx(ctx)
+	user, ok := auth.UserFromCtx(ctx)
 	if !ok {
 		return &connect.Response[commurzpbv1.Cart]{}, nil
 	}
@@ -69,7 +70,7 @@ func (service *Service) FindUserByToken(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.Empty],
 ) (res *connect.Response[commurzpbv1.User], err error) {
-	user, ok := UserFromCtx(ctx)
+	user, ok := auth.UserFromCtx(ctx)
 	if !ok {
 		return &connect.Response[commurzpbv1.User]{}, nil
 	}

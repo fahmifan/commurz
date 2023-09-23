@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/internal/pkgorder"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
@@ -22,6 +23,11 @@ func (service *Service) CheckoutAll(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CheckoutAllRequest],
 ) (*connect.Response[commurzpbv1.Order], error) {
+	_, ok := auth.UserFromCtx(ctx)
+	if !ok {
+		return nil, ErrUnauthenticated
+	}
+
 	userID, err := uuid.Parse(req.Msg.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("[CheckoutAll] parse userID: %w", err)

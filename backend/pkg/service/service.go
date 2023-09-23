@@ -20,8 +20,10 @@ import (
 )
 
 var (
-	ErrInternal = connect.NewError(connect.CodeInternal, errors.New("internal error"))
-	ErrNotFound = connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	ErrInternal        = connect.NewError(connect.CodeInternal, errors.New("internal error"))
+	ErrNotFound        = connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	ErrUnauthorized    = connect.NewError(connect.CodePermissionDenied, errors.New("unauthorized"))
+	ErrUnauthenticated = connect.NewError(connect.CodeUnauthenticated, errors.New("unauthenticated"))
 )
 
 type Config struct {

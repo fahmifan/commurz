@@ -3,30 +3,20 @@ package service
 import (
 	"context"
 
-	"github.com/fahmifan/authme/auth"
-	"github.com/fahmifan/authme/backend/httphandler"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/flycasbin/acl"
-	"github.com/google/uuid"
 )
 
-type User struct {
-	ID   uuid.UUID
-	Role acl.Role
-}
-
-type CtxKey string
-
-const UserCtxKey CtxKey = "user"
-
-func UserFromCtx(ctx context.Context) (auth.UserSession, bool) {
-	user, ok := httphandler.GetUser(ctx)
+func (service *Service) can(ctx context.Context, act acl.Action, rsc acl.Resource) error {
+	user, ok := auth.UserFromCtx(ctx)
 	if !ok {
-		return auth.UserSession{}, false
+		return ErrUnauthenticated
 	}
 
-	return user, true
-}
+	err := service.ACL.Can(user.Role, act, rsc)
+	if err != nil {
+		return ErrUnauthorized
+	}
 
-func CtxWithUser(ctx context.Context, user User) context.Context {
-	return context.WithValue(ctx, UserCtxKey, user)
+	return nil
 }

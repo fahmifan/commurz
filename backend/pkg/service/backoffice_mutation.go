@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/internal/pkgprice"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/pkgutil"
@@ -19,6 +20,10 @@ func (service *Service) UpdateProductStock(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.UpdateProductStockRequest],
 ) (res *connect.Response[commurzpbv1.Empty], err error) {
+	if err := service.can(ctx, auth.Manage, auth.Product); err != nil {
+		return nil, err
+	}
+
 	productRepo := pkgproduct.ProductReader{}
 	productWriter := pkgproduct.ProductWriter{}
 	product := pkgproduct.Product{}
@@ -65,7 +70,7 @@ func (service *Service) UpdateProductStock(
 
 	if err != nil {
 		logs.ErrCtx(ctx, err, "UpdateProductStock: Transaction")
-		return nil, connect.NewError(connect.CodeInternal, ErrInternal)
+		return nil, ErrInternal
 	}
 
 	res = &connect.Response[commurzpbv1.Empty]{}

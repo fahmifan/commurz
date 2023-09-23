@@ -11,6 +11,7 @@ import (
 	"github.com/fahmifan/authme/backend/httphandler"
 	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/config"
+	"github.com/fahmifan/commurz/pkg/internal/pkguser"
 	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/pb/commurz/v1/commurzv1connect"
 	"github.com/fahmifan/commurz/pkg/service"
@@ -78,6 +79,7 @@ func (server *Webserver) Run() error {
 
 	server.echo.Use(
 		echo.WrapMiddleware(cookieMdw.SetAuthUserToCtx()),
+		server.addRoleToCtx,
 	)
 
 	if err = server.routeFE(server.echo, &pageMdw); err != nil {
@@ -104,6 +106,43 @@ func (server *Webserver) getPort() string {
 	}
 
 	return ":" + fmt.Sprint(server.port)
+}
+
+func (server *Webserver) addRoleToCtx(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := c.Request().Context()
+
+		userSess, ok := httphandler.GetUser(ctx)
+		if ok {
+			c.Set("user", userSess)
+		}
+
+		userID, err := uuid.Parse(userSess.GUID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"error": "failed parse user_guid",
+			})
+		}
+
+		user, err := pkguser.UserReader{}.
+			FindUserByID(ctx, server.service.DB, userID)
+		if err != nil {
+			logs.ErrCtx(ctx, err, "[Middleware] add role to user")
+			return c.JSON(http.StatusInternalServerError, echo.Map{
+				"error": "failed get user",
+			})
+		}
+
+		userAuth := auth.UserAuth{
+			UserSession: userSess,
+			Role:        user.Role,
+		}
+
+		reqCtx := auth.CtxWithUser(ctx, userAuth)
+		c.SetRequest(c.Request().WithContext(reqCtx))
+
+		return next(c)
+	}
 }
 
 func (s *Webserver) routeAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {

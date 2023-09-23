@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/internal/pkgproduct"
 	"github.com/fahmifan/commurz/pkg/internal/sqlcs"
 	"github.com/fahmifan/commurz/pkg/logs"
@@ -17,7 +18,9 @@ func (service *Service) ListBackofficeProducts(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.ListBackofficeProductsRequest],
 ) (*connect.Response[commurzpbv1.ListBackofficeProductsResponse], error) {
-	// TODO: add authz
+	if err := service.can(ctx, auth.Manage, auth.Product); err != nil {
+		return nil, err
+	}
 
 	productReader := pkgproduct.ProductBackofficeReader{}
 
