@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/fahmifan/authme/backend/httphandler"
-	"github.com/fahmifan/commurz/pkg/auth"
 	"github.com/fahmifan/commurz/pkg/config"
-	"github.com/fahmifan/commurz/pkg/core/pkguser"
+	"github.com/fahmifan/commurz/pkg/core/auth"
+	"github.com/fahmifan/commurz/pkg/core/auth/auth_query"
 	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/pb/commurz/v1/commurzv1connect"
 	"github.com/fahmifan/commurz/pkg/service"
@@ -124,8 +124,7 @@ func (server *Webserver) addRoleToCtx(next echo.HandlerFunc) echo.HandlerFunc {
 			})
 		}
 
-		user, err := pkguser.UserReader{}.
-			FindUserByID(ctx, server.service.DB, userID)
+		user, err := server.service.InternalFindUserByID(ctx, userID)
 		if err != nil {
 			logs.ErrCtx(ctx, err, "[Middleware] add role to user")
 			return c.JSON(http.StatusInternalServerError, echo.Map{
@@ -147,14 +146,15 @@ func (server *Webserver) addRoleToCtx(next echo.HandlerFunc) echo.HandlerFunc {
 
 func (s *Webserver) routeAllFEs(group *echo.Group, hh echo.HandlerFunc, pageMdw *PageMiddleware) {
 	group.GET("*", hh).Name = "page-fe-catch-all" // login
+	hasAccess := pageMdw.HasAccess
 
-	group.GET("/backoffice/products", hh, pageMdw.HasAccess([]service.Perm{
-		Perm(auth.Manage, auth.Product),
-	})).Name = "page-backoffice-products"
+	group.GET("/backoffice/products", hh, hasAccess(
+		perm(auth.Manage, auth.Product),
+	)).Name = "page-backoffice-products"
 
-	group.GET("/backoffice/products/detail", hh, pageMdw.HasAccess([]service.Perm{
-		Perm(auth.Manage, auth.Product),
-	})).Name = "page-backoffice-products-stocks"
+	group.GET("/backoffice/products/detail", hh, hasAccess(
+		perm(auth.Manage, auth.Product),
+	)).Name = "page-backoffice-products-stocks"
 }
 
 func (s *Webserver) routeFE(ec *echo.Echo, pageMdw *PageMiddleware) error {
@@ -208,15 +208,15 @@ func (s *Webserver) renderVite(tplName string, viteGlue *vueglue.VueGlue) echo.H
 	}
 }
 
-func Perm(action acl.Action, resource acl.Resource) service.Perm {
-	return service.Perm{Action: action, Resource: resource}
+func perm(action acl.Action, resource acl.Resource) auth_query.Perm {
+	return auth_query.Perm{Action: action, Resource: resource}
 }
 
 type PageMiddleware struct {
 	*Webserver
 }
 
-func (mw *PageMiddleware) HasAccess(perms []service.Perm) echo.MiddlewareFunc {
+func (mw *PageMiddleware) HasAccess(perms ...auth_query.Perm) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ec echo.Context) error {
 			authUser, ok := httphandler.GetUser(ec.Request().Context())

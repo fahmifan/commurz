@@ -1,4 +1,4 @@
-package pkguser
+package user_profile
 
 import (
 	"context"

@@ -1,8 +1,7 @@
 // Package pkgproduct to manage product and stock
-package pkgproduct
+package order_inventory
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -10,10 +9,6 @@ import (
 	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
-)
-
-var (
-	ErrInsufficientStock = errors.New("insufficient stock")
 )
 
 type Product struct {

@@ -8,6 +8,7 @@ replace github.com/fahmifan/authme => github.com/fahmifan/authme v0.0.0-20230923
 replace github.com/torenware/vite-go => github.com/fahmifan/vite-go v0.0.0-20230827061318-7ce29a515d1d
 
 require (
+	connectrpc.com/connect v1.11.1
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/bufbuild/connect-go v1.9.0
 	github.com/fahmifan/authme v0.0.0-20230816035314-840daf5c52fd

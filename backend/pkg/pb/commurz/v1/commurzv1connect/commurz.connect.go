@@ -48,12 +48,12 @@ const (
 	// CommurzServiceFindCartByUserTokenProcedure is the fully-qualified name of the CommurzService's
 	// FindCartByUserToken RPC.
 	CommurzServiceFindCartByUserTokenProcedure = "/commurz.v1.CommurzService/FindCartByUserToken"
-	// CommurzServiceListBackofficeProductsProcedure is the fully-qualified name of the CommurzService's
-	// ListBackofficeProducts RPC.
-	CommurzServiceListBackofficeProductsProcedure = "/commurz.v1.CommurzService/ListBackofficeProducts"
 	// CommurzServiceFindProductByIDProcedure is the fully-qualified name of the CommurzService's
 	// FindProductByID RPC.
 	CommurzServiceFindProductByIDProcedure = "/commurz.v1.CommurzService/FindProductByID"
+	// CommurzServiceListBackofficeProductsProcedure is the fully-qualified name of the CommurzService's
+	// ListBackofficeProducts RPC.
+	CommurzServiceListBackofficeProductsProcedure = "/commurz.v1.CommurzService/ListBackofficeProducts"
 	// CommurzServiceCreateProductProcedure is the fully-qualified name of the CommurzService's
 	// CreateProduct RPC.
 	CommurzServiceCreateProductProcedure = "/commurz.v1.CommurzService/CreateProduct"
@@ -74,18 +74,17 @@ type CommurzServiceClient interface {
 	ListUsers(context.Context, *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error)
 	FindUserByID(context.Context, *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.User], error)
 	FindUserByToken(context.Context, *connect_go.Request[v1.Empty]) (*connect_go.Response[v1.User], error)
-	// app
+	// storefront query
 	ListAppProducts(context.Context, *connect_go.Request[v1.ListAppProductsRequest]) (*connect_go.Response[v1.ListAppProductsResponse], error)
+	// order & inventory query
 	FindCartByUserToken(context.Context, *connect_go.Request[v1.Empty]) (*connect_go.Response[v1.Cart], error)
-	// backoffice
-	ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error)
-	// product
 	FindProductByID(context.Context, *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.Product], error)
-	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
+	ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error)
+	// order & inventory command
+	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Empty], error)
 	UpdateProductStock(context.Context, *connect_go.Request[v1.UpdateProductStockRequest]) (*connect_go.Response[v1.Empty], error)
-	// cart
-	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error)
-	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
+	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Empty], error)
+	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Empty], error)
 }
 
 // NewCommurzServiceClient constructs a client for the commurz.v1.CommurzService service. By
@@ -123,17 +122,17 @@ func NewCommurzServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+CommurzServiceFindCartByUserTokenProcedure,
 			opts...,
 		),
-		listBackofficeProducts: connect_go.NewClient[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse](
-			httpClient,
-			baseURL+CommurzServiceListBackofficeProductsProcedure,
-			opts...,
-		),
 		findProductByID: connect_go.NewClient[v1.FindByIDRequest, v1.Product](
 			httpClient,
 			baseURL+CommurzServiceFindProductByIDProcedure,
 			opts...,
 		),
-		createProduct: connect_go.NewClient[v1.CreateProductRequest, v1.Product](
+		listBackofficeProducts: connect_go.NewClient[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse](
+			httpClient,
+			baseURL+CommurzServiceListBackofficeProductsProcedure,
+			opts...,
+		),
+		createProduct: connect_go.NewClient[v1.CreateProductRequest, v1.Empty](
 			httpClient,
 			baseURL+CommurzServiceCreateProductProcedure,
 			opts...,
@@ -143,12 +142,12 @@ func NewCommurzServiceClient(httpClient connect_go.HTTPClient, baseURL string, o
 			baseURL+CommurzServiceUpdateProductStockProcedure,
 			opts...,
 		),
-		addProductToCart: connect_go.NewClient[v1.AddProductToCartRequest, v1.Cart](
+		addProductToCart: connect_go.NewClient[v1.AddProductToCartRequest, v1.Empty](
 			httpClient,
 			baseURL+CommurzServiceAddProductToCartProcedure,
 			opts...,
 		),
-		checkoutAll: connect_go.NewClient[v1.CheckoutAllRequest, v1.Order](
+		checkoutAll: connect_go.NewClient[v1.CheckoutAllRequest, v1.Empty](
 			httpClient,
 			baseURL+CommurzServiceCheckoutAllProcedure,
 			opts...,
@@ -163,12 +162,12 @@ type commurzServiceClient struct {
 	findUserByToken        *connect_go.Client[v1.Empty, v1.User]
 	listAppProducts        *connect_go.Client[v1.ListAppProductsRequest, v1.ListAppProductsResponse]
 	findCartByUserToken    *connect_go.Client[v1.Empty, v1.Cart]
-	listBackofficeProducts *connect_go.Client[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse]
 	findProductByID        *connect_go.Client[v1.FindByIDRequest, v1.Product]
-	createProduct          *connect_go.Client[v1.CreateProductRequest, v1.Product]
+	listBackofficeProducts *connect_go.Client[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse]
+	createProduct          *connect_go.Client[v1.CreateProductRequest, v1.Empty]
 	updateProductStock     *connect_go.Client[v1.UpdateProductStockRequest, v1.Empty]
-	addProductToCart       *connect_go.Client[v1.AddProductToCartRequest, v1.Cart]
-	checkoutAll            *connect_go.Client[v1.CheckoutAllRequest, v1.Order]
+	addProductToCart       *connect_go.Client[v1.AddProductToCartRequest, v1.Empty]
+	checkoutAll            *connect_go.Client[v1.CheckoutAllRequest, v1.Empty]
 }
 
 // ListUsers calls commurz.v1.CommurzService.ListUsers.
@@ -196,18 +195,18 @@ func (c *commurzServiceClient) FindCartByUserToken(ctx context.Context, req *con
 	return c.findCartByUserToken.CallUnary(ctx, req)
 }
 
-// ListBackofficeProducts calls commurz.v1.CommurzService.ListBackofficeProducts.
-func (c *commurzServiceClient) ListBackofficeProducts(ctx context.Context, req *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error) {
-	return c.listBackofficeProducts.CallUnary(ctx, req)
-}
-
 // FindProductByID calls commurz.v1.CommurzService.FindProductByID.
 func (c *commurzServiceClient) FindProductByID(ctx context.Context, req *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.Product], error) {
 	return c.findProductByID.CallUnary(ctx, req)
 }
 
+// ListBackofficeProducts calls commurz.v1.CommurzService.ListBackofficeProducts.
+func (c *commurzServiceClient) ListBackofficeProducts(ctx context.Context, req *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error) {
+	return c.listBackofficeProducts.CallUnary(ctx, req)
+}
+
 // CreateProduct calls commurz.v1.CommurzService.CreateProduct.
-func (c *commurzServiceClient) CreateProduct(ctx context.Context, req *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error) {
+func (c *commurzServiceClient) CreateProduct(ctx context.Context, req *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Empty], error) {
 	return c.createProduct.CallUnary(ctx, req)
 }
 
@@ -217,12 +216,12 @@ func (c *commurzServiceClient) UpdateProductStock(ctx context.Context, req *conn
 }
 
 // AddProductToCart calls commurz.v1.CommurzService.AddProductToCart.
-func (c *commurzServiceClient) AddProductToCart(ctx context.Context, req *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+func (c *commurzServiceClient) AddProductToCart(ctx context.Context, req *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Empty], error) {
 	return c.addProductToCart.CallUnary(ctx, req)
 }
 
 // CheckoutAll calls commurz.v1.CommurzService.CheckoutAll.
-func (c *commurzServiceClient) CheckoutAll(ctx context.Context, req *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error) {
+func (c *commurzServiceClient) CheckoutAll(ctx context.Context, req *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Empty], error) {
 	return c.checkoutAll.CallUnary(ctx, req)
 }
 
@@ -232,18 +231,17 @@ type CommurzServiceHandler interface {
 	ListUsers(context.Context, *connect_go.Request[v1.ListUsersRequest]) (*connect_go.Response[v1.ListUsersResponse], error)
 	FindUserByID(context.Context, *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.User], error)
 	FindUserByToken(context.Context, *connect_go.Request[v1.Empty]) (*connect_go.Response[v1.User], error)
-	// app
+	// storefront query
 	ListAppProducts(context.Context, *connect_go.Request[v1.ListAppProductsRequest]) (*connect_go.Response[v1.ListAppProductsResponse], error)
+	// order & inventory query
 	FindCartByUserToken(context.Context, *connect_go.Request[v1.Empty]) (*connect_go.Response[v1.Cart], error)
-	// backoffice
-	ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error)
-	// product
 	FindProductByID(context.Context, *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.Product], error)
-	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error)
+	ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error)
+	// order & inventory command
+	CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Empty], error)
 	UpdateProductStock(context.Context, *connect_go.Request[v1.UpdateProductStockRequest]) (*connect_go.Response[v1.Empty], error)
-	// cart
-	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error)
-	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error)
+	AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Empty], error)
+	CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Empty], error)
 }
 
 // NewCommurzServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -277,14 +275,14 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 		svc.FindCartByUserToken,
 		opts...,
 	)
-	commurzServiceListBackofficeProductsHandler := connect_go.NewUnaryHandler(
-		CommurzServiceListBackofficeProductsProcedure,
-		svc.ListBackofficeProducts,
-		opts...,
-	)
 	commurzServiceFindProductByIDHandler := connect_go.NewUnaryHandler(
 		CommurzServiceFindProductByIDProcedure,
 		svc.FindProductByID,
+		opts...,
+	)
+	commurzServiceListBackofficeProductsHandler := connect_go.NewUnaryHandler(
+		CommurzServiceListBackofficeProductsProcedure,
+		svc.ListBackofficeProducts,
 		opts...,
 	)
 	commurzServiceCreateProductHandler := connect_go.NewUnaryHandler(
@@ -319,10 +317,10 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect_go.Hand
 			commurzServiceListAppProductsHandler.ServeHTTP(w, r)
 		case CommurzServiceFindCartByUserTokenProcedure:
 			commurzServiceFindCartByUserTokenHandler.ServeHTTP(w, r)
-		case CommurzServiceListBackofficeProductsProcedure:
-			commurzServiceListBackofficeProductsHandler.ServeHTTP(w, r)
 		case CommurzServiceFindProductByIDProcedure:
 			commurzServiceFindProductByIDHandler.ServeHTTP(w, r)
+		case CommurzServiceListBackofficeProductsProcedure:
+			commurzServiceListBackofficeProductsHandler.ServeHTTP(w, r)
 		case CommurzServiceCreateProductProcedure:
 			commurzServiceCreateProductHandler.ServeHTTP(w, r)
 		case CommurzServiceUpdateProductStockProcedure:
@@ -360,15 +358,15 @@ func (UnimplementedCommurzServiceHandler) FindCartByUserToken(context.Context, *
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.FindCartByUserToken is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.ListBackofficeProducts is not implemented"))
-}
-
 func (UnimplementedCommurzServiceHandler) FindProductByID(context.Context, *connect_go.Request[v1.FindByIDRequest]) (*connect_go.Response[v1.Product], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.FindProductByID is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Product], error) {
+func (UnimplementedCommurzServiceHandler) ListBackofficeProducts(context.Context, *connect_go.Request[v1.ListBackofficeProductsRequest]) (*connect_go.Response[v1.ListBackofficeProductsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.ListBackofficeProducts is not implemented"))
+}
+
+func (UnimplementedCommurzServiceHandler) CreateProduct(context.Context, *connect_go.Request[v1.CreateProductRequest]) (*connect_go.Response[v1.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.CreateProduct is not implemented"))
 }
 
@@ -376,10 +374,10 @@ func (UnimplementedCommurzServiceHandler) UpdateProductStock(context.Context, *c
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.UpdateProductStock is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Cart], error) {
+func (UnimplementedCommurzServiceHandler) AddProductToCart(context.Context, *connect_go.Request[v1.AddProductToCartRequest]) (*connect_go.Response[v1.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.AddProductToCart is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Order], error) {
+func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect_go.Request[v1.CheckoutAllRequest]) (*connect_go.Response[v1.Empty], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("commurz.v1.CommurzService.CheckoutAll is not implemented"))
 }

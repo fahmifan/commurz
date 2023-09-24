@@ -147,19 +147,17 @@ service CommurzService {
   rpc FindUserByID(FindByIDRequest) returns (User) {}
   rpc FindUserByToken(Empty) returns (User) {}
 
-  // app
+  // storefront query
   rpc ListAppProducts(ListAppProductsRequest) returns (ListAppProductsResponse) {}
+
+  // order & inventory query
   rpc FindCartByUserToken(Empty) returns (Cart) {}
-
-  // backoffice
-  rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}
-
-  // product
   rpc FindProductByID(FindByIDRequest) returns (Product) {}
-  rpc CreateProduct(CreateProductRequest) returns (Product) {}
+  rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}
+  
+  // order & inventory command
+  rpc CreateProduct(CreateProductRequest) returns (Empty) {}
   rpc UpdateProductStock(UpdateProductStockRequest) returns (Empty) {}
-
-  // cart
-  rpc AddProductToCart(AddProductToCartRequest) returns (Cart) {}
-  rpc CheckoutAll(CheckoutAllRequest) returns (Order) {}
+  rpc AddProductToCart(AddProductToCartRequest) returns (Empty) {}
+  rpc CheckoutAll(CheckoutAllRequest) returns (Empty) {}
 }

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddProductToCartRequest, Cart, CheckoutAllRequest, CreateProductRequest, Empty, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Order, Product, UpdateProductStockRequest, User } from "./commurz_pb.js";
+import { AddProductToCartRequest, Cart, CheckoutAllRequest, CreateProductRequest, Empty, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Product, UpdateProductStockRequest, User } from "./commurz_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -44,7 +44,7 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
-     * app
+     * storefront query
      *
      * @generated from rpc commurz.v1.CommurzService.ListAppProducts
      */
@@ -55,6 +55,8 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
+     * order & inventory query
+     *
      * @generated from rpc commurz.v1.CommurzService.FindCartByUserToken
      */
     findCartByUserToken: {
@@ -64,19 +66,6 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
-     * backoffice
-     *
-     * @generated from rpc commurz.v1.CommurzService.ListBackofficeProducts
-     */
-    listBackofficeProducts: {
-      name: "ListBackofficeProducts",
-      I: ListBackofficeProductsRequest,
-      O: ListBackofficeProductsResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * product
-     *
      * @generated from rpc commurz.v1.CommurzService.FindProductByID
      */
     findProductByID: {
@@ -86,12 +75,23 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
+     * @generated from rpc commurz.v1.CommurzService.ListBackofficeProducts
+     */
+    listBackofficeProducts: {
+      name: "ListBackofficeProducts",
+      I: ListBackofficeProductsRequest,
+      O: ListBackofficeProductsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * order & inventory command
+     *
      * @generated from rpc commurz.v1.CommurzService.CreateProduct
      */
     createProduct: {
       name: "CreateProduct",
       I: CreateProductRequest,
-      O: Product,
+      O: Empty,
       kind: MethodKind.Unary,
     },
     /**
@@ -104,14 +104,12 @@ export const CommurzService = {
       kind: MethodKind.Unary,
     },
     /**
-     * cart
-     *
      * @generated from rpc commurz.v1.CommurzService.AddProductToCart
      */
     addProductToCart: {
       name: "AddProductToCart",
       I: AddProductToCartRequest,
-      O: Cart,
+      O: Empty,
       kind: MethodKind.Unary,
     },
     /**
@@ -120,7 +118,7 @@ export const CommurzService = {
     checkoutAll: {
       name: "CheckoutAll",
       I: CheckoutAllRequest,
-      O: Order,
+      O: Empty,
       kind: MethodKind.Unary,
     },
   }

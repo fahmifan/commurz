@@ -1,12 +1,10 @@
-package pkgorder
+package order_inventory
 
 import (
 	"context"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/fahmifan/commurz/pkg/core/pkgproduct"
-	"github.com/fahmifan/commurz/pkg/core/pkguser"
 	"github.com/fahmifan/commurz/pkg/parseutil"
 	"github.com/fahmifan/commurz/pkg/preloads"
 	"github.com/fahmifan/commurz/pkg/sqlcs"
@@ -31,18 +29,12 @@ func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, user
 
 	cart := cartFromSqlc(xcart)
 
-	user, err := pkguser.UserReader{}.FindUserByID(ctx, tx, userID)
-	if err != nil {
-		return Cart{}, fmt.Errorf("[FindCartByUserID] FindUserByID: %w", err)
-	}
-
 	cartItems, err := repo.FindCartItemsByIDs(ctx, tx, []ulids.ULID{cart.ID})
 	if err != nil {
 		return Cart{}, fmt.Errorf("[FindCartByUserID] FindCartItemsByIDs: %w", err)
 	}
 
 	cart.Items = cartItems
-	cart.User = user
 
 	return cart, nil
 }
@@ -50,7 +42,7 @@ func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, user
 func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs []ulids.ULID) ([]CartItem, error) {
 	query := sqlcs.New(tx)
 
-	productRader := pkgproduct.ProductReader{}
+	productRader := ProductReader{}
 
 	xitems, err := query.FindAllCartItemsByCartIDs(ctx, parseutil.StringULIDs(cartIDs))
 	if err != nil {
@@ -63,12 +55,12 @@ func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs
 
 	items := lo.Map(xitems, cartItemFromSqlc)
 	productIDs := lo.Map(items, func(item CartItem, index int) ulids.ULID { return item.ProductID })
-	items, err = preloads.Preload[CartItem, pkgproduct.Product, ulids.ULID]{
+	items, err = preloads.Preload[CartItem, Product, ulids.ULID]{
 		Targets:   items,
-		RefItem:   func(item pkgproduct.Product) ulids.ULID { return item.ID },
+		RefItem:   func(item Product) ulids.ULID { return item.ID },
 		RefTarget: func(target CartItem) ulids.ULID { return target.ProductID },
-		SetItem:   func(item *CartItem, target pkgproduct.Product) { item.Product = target },
-		FetchItems: func() ([]pkgproduct.Product, error) {
+		SetItem:   func(item *CartItem, target Product) { item.Product = target },
+		FetchItems: func() ([]Product, error) {
 			return productRader.FindProductsByIDs(ctx, tx, productIDs)
 		},
 	}.Preload()
@@ -135,7 +127,7 @@ type OrderReader struct{}
 
 func (repo OrderReader) FindOrderItemsByOrderID(ctx context.Context, tx sqlcs.DBTX, orderID ulids.ULID) ([]OrderItem, error) {
 	query := sqlcs.New(tx)
-	productRepo := pkgproduct.ProductReader{}
+	productRepo := ProductReader{}
 
 	xitems, err := query.FindOrderItemsByOrderID(ctx, orderID.String())
 	if err != nil {
@@ -145,12 +137,12 @@ func (repo OrderReader) FindOrderItemsByOrderID(ctx context.Context, tx sqlcs.DB
 	items := lo.Map(xitems, orderItemFromSqlc)
 	productIDs := lo.Map(items, func(item OrderItem, index int) ulids.ULID { return item.ProductID })
 
-	items, err = preloads.Preload[OrderItem, pkgproduct.Product, ulids.ULID]{
+	items, err = preloads.Preload[OrderItem, Product, ulids.ULID]{
 		Targets:   items,
 		RefTarget: func(target OrderItem) ulids.ULID { return target.ProductID },
-		RefItem:   func(item pkgproduct.Product) ulids.ULID { return item.ID },
-		SetItem:   func(item *OrderItem, target pkgproduct.Product) { item.Product = target },
-		FetchItems: func() ([]pkgproduct.Product, error) {
+		RefItem:   func(item Product) ulids.ULID { return item.ID },
+		SetItem:   func(item *OrderItem, target Product) { item.Product = target },
+		FetchItems: func() ([]Product, error) {
 			return productRepo.FindProductsByIDs(ctx, tx, productIDs)
 		},
 	}.Preload()
