@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/fahmifan/commurz/pkg/core/order_inventory"
-	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
+	"github.com/fahmifan/commurz/pkg/pkgmoney"
 	"github.com/fahmifan/ulids"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

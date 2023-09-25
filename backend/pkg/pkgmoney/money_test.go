@@ -3,7 +3,7 @@ package pkgmoney_test
 import (
 	"testing"
 
-	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
+	"github.com/fahmifan/commurz/pkg/pkgmoney"
 	"github.com/stretchr/testify/require"
 )
 
