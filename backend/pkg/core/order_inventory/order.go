@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/fahmifan/commurz/pkg/parseutil"
 	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
@@ -172,7 +172,7 @@ type CartItem struct {
 	ProductID ulids.ULID `json:"product_id" db:"product_id"`
 	Quantity  int64      `json:"quantity" db:"quantity"`
 	// ProductPrice is price per product that will be used when checkout
-	ProductPrice pkgprice.Price `json:"product_price" db:"product_price"`
+	ProductPrice pkgmoney.Money `json:"product_price" db:"product_price"`
 
 	Product Product `json:"product" db:"-"`
 }
@@ -183,7 +183,7 @@ func cartItemFromSqlc(xcartItem sqlcs.CartItem, idx int) CartItem {
 		CartID:       parseutil.WeakParseULID(xcartItem.CartID),
 		ProductID:    parseutil.WeakParseULID(xcartItem.ProductID),
 		Quantity:     xcartItem.Quantity,
-		ProductPrice: pkgprice.New(xcartItem.Price),
+		ProductPrice: pkgmoney.New(xcartItem.Price),
 	}
 }
 
@@ -212,8 +212,8 @@ func orderFromSqlc(xorder sqlcs.Order) Order {
 	}
 }
 
-func (order Order) TotalPrice() pkgprice.Price {
-	var totalPrice pkgprice.Price
+func (order Order) TotalPrice() pkgmoney.Money {
+	var totalPrice pkgmoney.Money
 	for _, item := range order.Items {
 		totalPrice = item.Price.Times(item.Quantity)
 	}
@@ -235,7 +235,7 @@ type OrderItem struct {
 	ID        ulids.ULID
 	OrderID   ulids.ULID
 	ProductID ulids.ULID
-	Price     pkgprice.Price
+	Price     pkgmoney.Money
 	Quantity  int64
 
 	Product Product
@@ -245,7 +245,7 @@ func orderItemFromSqlc(xorderItem sqlcs.OrderItem, idx int) OrderItem {
 	return OrderItem{
 		ID:        parseutil.WeakParseULID(xorderItem.ID),
 		OrderID:   parseutil.WeakParseULID(xorderItem.OrderID),
-		Price:     pkgprice.New(xorderItem.Price),
+		Price:     pkgmoney.New(xorderItem.Price),
 		Quantity:  xorderItem.Quantity,
 		ProductID: parseutil.WeakParseULID(xorderItem.ProductID),
 	}

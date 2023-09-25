@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
@@ -14,7 +14,7 @@ import (
 type ProductListing struct {
 	ID          ulids.ULID
 	Name        string
-	Price       pkgprice.Price
+	Price       pkgmoney.Money
 	Version     int64
 	LatestStock int64
 }
@@ -32,7 +32,7 @@ func (app ProductListingReader) FindAllProducts(ctx context.Context, db *sql.DB,
 		return ProductListing{
 			ID:          ulids.ULID{ULID: ulid.MustParse(xproduct.ID)},
 			Name:        xproduct.Name,
-			Price:       pkgprice.New(xproduct.Price),
+			Price:       pkgmoney.New(xproduct.Price),
 			Version:     xproduct.Version,
 			LatestStock: xproduct.LatestStock,
 		}

@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/fahmifan/commurz/pkg/core/order_inventory"
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateProduct(t *testing.T) {
 	now := time.Now()
-	price := pkgprice.New(100)
+	price := pkgmoney.New(100)
 
 	t.Run("able to add & reduce stock", func(t *testing.T) {
 		product, err := order_inventory.CreateProduct("product 1", price)

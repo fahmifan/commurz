@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/fahmifan/commurz/pkg/sqlcs"
 	"github.com/fahmifan/ulids"
 	"github.com/oklog/ulid/v2"
@@ -14,7 +14,7 @@ import (
 type Product struct {
 	ID      ulids.ULID
 	Name    string
-	Price   pkgprice.Price
+	Price   pkgmoney.Money
 	Version int64
 
 	Stocks []ProductStock
@@ -24,14 +24,14 @@ func productFromSqlc(p sqlcs.Product, index int) Product {
 	return Product{
 		ID:      ulids.ULID{ULID: ulid.MustParse(p.ID)},
 		Name:    p.Name,
-		Price:   pkgprice.New(p.Price),
+		Price:   pkgmoney.New(p.Price),
 		Version: p.Version,
 	}
 }
 
-var minPrice = pkgprice.New(10)
+var minPrice = pkgmoney.New(10)
 
-func CreateProduct(name string, productPrice pkgprice.Price) (Product, error) {
+func CreateProduct(name string, productPrice pkgmoney.Money) (Product, error) {
 	minNameLen := 3
 	if len(name) < minNameLen {
 		return Product{}, fmt.Errorf("min name length is %d characters", minNameLen)

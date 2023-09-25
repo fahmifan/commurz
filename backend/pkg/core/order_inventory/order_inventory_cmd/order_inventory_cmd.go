@@ -10,7 +10,7 @@ import (
 	"github.com/fahmifan/commurz/pkg/core"
 	"github.com/fahmifan/commurz/pkg/core/auth"
 	"github.com/fahmifan/commurz/pkg/core/order_inventory"
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/fahmifan/commurz/pkg/logs"
 	"github.com/fahmifan/commurz/pkg/parseutil"
 	commurzpbv1 "github.com/fahmifan/commurz/pkg/pb/commurz/v1"
@@ -92,7 +92,7 @@ func (service *OrderInventoryCmd) CreateProduct(
 	productRepo := order_inventory.ProductReader{}
 	productWriter := order_inventory.ProductWriter{}
 
-	product, err := order_inventory.CreateProduct(req.Msg.Name, pkgprice.New(req.Msg.Price))
+	product, err := order_inventory.CreateProduct(req.Msg.Name, pkgmoney.New(req.Msg.Price))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}

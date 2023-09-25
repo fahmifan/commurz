@@ -1,16 +1,16 @@
-package pkgprice_test
+package pkgmoney_test
 
 import (
 	"testing"
 
-	"github.com/fahmifan/commurz/pkg/core/pkgprice"
+	"github.com/fahmifan/commurz/pkg/core/pkgmoney"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPrice(t *testing.T) {
-	pkgprice.Divider = 100
+	pkgmoney.Divider = 100
 
-	price := pkgprice.New(123456)
+	price := pkgmoney.New(123456)
 
 	require.Equal(t, price.IDR(), int64(1234))
 	require.Equal(t, price.IDRCent(), int64(56))
@@ -19,19 +19,19 @@ func TestPrice(t *testing.T) {
 }
 
 func TestPrice_Arithmatic(t *testing.T) {
-	pkgprice.Divider = 100
+	pkgmoney.Divider = 100
 
-	price := pkgprice.New(10_000)
+	price := pkgmoney.New(10_000)
 
 	price = price.Times(3)
 	require.Equal(t, "30,0", price.String())
 
-	price2 := pkgprice.New(500)
+	price2 := pkgmoney.New(500)
 	price = price.Add(price2)
 
 	require.Equal(t, "30,500", price.String())
 
-	price3 := pkgprice.New(16)
+	price3 := pkgmoney.New(16)
 	price = price.Sub(price3)
 
 	require.Equal(t, "30,484", price.String())
