@@ -10,7 +10,6 @@ replace github.com/torenware/vite-go => github.com/fahmifan/vite-go v0.0.0-20230
 require (
 	connectrpc.com/connect v1.11.1
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/bufbuild/connect-go v1.9.0
 	github.com/fahmifan/authme v0.0.0-20230816035314-840daf5c52fd
 	github.com/fahmifan/flycasbin v0.0.0-20220115024912-e54fb8eeed0a
 	github.com/fahmifan/ulids v1.1.0

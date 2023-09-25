@@ -72,7 +72,6 @@ func (server *Webserver) Run() error {
 	}
 
 	server.cookieAutherHandler.SetRedirectAfterLogin(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("redirect after login")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	})
 	cookieMdw := server.cookieAutherHandler.Middleware()
@@ -111,11 +110,12 @@ func (server *Webserver) getPort() string {
 func (server *Webserver) addRoleToCtx(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx := c.Request().Context()
-
 		userSess, ok := httphandler.GetUser(ctx)
-		if ok {
-			c.Set("user", userSess)
+		if !ok {
+			return next(c)
 		}
+
+		c.Set("user", userSess)
 
 		userID, err := uuid.Parse(userSess.GUID)
 		if err != nil {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/fahmifan/commurz/pkg/core"
 	"github.com/fahmifan/commurz/pkg/core/auth"
 	"github.com/fahmifan/commurz/pkg/core/order_inventory"
