@@ -140,6 +140,14 @@ message FindAllProductListingResponse {
   int32 count = 2;
 }
 
+message CheckoutAllResponse {
+  string id = 1;
+}
+
+message CreateProductResponse {
+  string id = 1;
+}
+
 // Service definition
 service CommurzService {
   // user
@@ -156,8 +164,8 @@ service CommurzService {
   rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}
   
   // order & inventory command
-  rpc CreateProduct(CreateProductRequest) returns (Empty) {}
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {}
   rpc UpdateProductStock(UpdateProductStockRequest) returns (Empty) {}
   rpc AddProductToCart(AddProductToCartRequest) returns (Empty) {}
-  rpc CheckoutAll(CheckoutAllRequest) returns (Empty) {}
+  rpc CheckoutAll(CheckoutAllRequest) returns (CheckoutAllResponse) {}
 }

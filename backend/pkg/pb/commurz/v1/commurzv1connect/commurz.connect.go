@@ -81,10 +81,10 @@ type CommurzServiceClient interface {
 	FindProductByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.Product], error)
 	ListBackofficeProducts(context.Context, *connect.Request[v1.ListBackofficeProductsRequest]) (*connect.Response[v1.ListBackofficeProductsResponse], error)
 	// order & inventory command
-	CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.Empty], error)
+	CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.CreateProductResponse], error)
 	UpdateProductStock(context.Context, *connect.Request[v1.UpdateProductStockRequest]) (*connect.Response[v1.Empty], error)
 	AddProductToCart(context.Context, *connect.Request[v1.AddProductToCartRequest]) (*connect.Response[v1.Empty], error)
-	CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.Empty], error)
+	CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.CheckoutAllResponse], error)
 }
 
 // NewCommurzServiceClient constructs a client for the commurz.v1.CommurzService service. By
@@ -132,7 +132,7 @@ func NewCommurzServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			baseURL+CommurzServiceListBackofficeProductsProcedure,
 			opts...,
 		),
-		createProduct: connect.NewClient[v1.CreateProductRequest, v1.Empty](
+		createProduct: connect.NewClient[v1.CreateProductRequest, v1.CreateProductResponse](
 			httpClient,
 			baseURL+CommurzServiceCreateProductProcedure,
 			opts...,
@@ -147,7 +147,7 @@ func NewCommurzServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			baseURL+CommurzServiceAddProductToCartProcedure,
 			opts...,
 		),
-		checkoutAll: connect.NewClient[v1.CheckoutAllRequest, v1.Empty](
+		checkoutAll: connect.NewClient[v1.CheckoutAllRequest, v1.CheckoutAllResponse](
 			httpClient,
 			baseURL+CommurzServiceCheckoutAllProcedure,
 			opts...,
@@ -164,10 +164,10 @@ type commurzServiceClient struct {
 	findCartByUserToken    *connect.Client[v1.Empty, v1.Cart]
 	findProductByID        *connect.Client[v1.FindByIDRequest, v1.Product]
 	listBackofficeProducts *connect.Client[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse]
-	createProduct          *connect.Client[v1.CreateProductRequest, v1.Empty]
+	createProduct          *connect.Client[v1.CreateProductRequest, v1.CreateProductResponse]
 	updateProductStock     *connect.Client[v1.UpdateProductStockRequest, v1.Empty]
 	addProductToCart       *connect.Client[v1.AddProductToCartRequest, v1.Empty]
-	checkoutAll            *connect.Client[v1.CheckoutAllRequest, v1.Empty]
+	checkoutAll            *connect.Client[v1.CheckoutAllRequest, v1.CheckoutAllResponse]
 }
 
 // ListUsers calls commurz.v1.CommurzService.ListUsers.
@@ -206,7 +206,7 @@ func (c *commurzServiceClient) ListBackofficeProducts(ctx context.Context, req *
 }
 
 // CreateProduct calls commurz.v1.CommurzService.CreateProduct.
-func (c *commurzServiceClient) CreateProduct(ctx context.Context, req *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.Empty], error) {
+func (c *commurzServiceClient) CreateProduct(ctx context.Context, req *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.CreateProductResponse], error) {
 	return c.createProduct.CallUnary(ctx, req)
 }
 
@@ -221,7 +221,7 @@ func (c *commurzServiceClient) AddProductToCart(ctx context.Context, req *connec
 }
 
 // CheckoutAll calls commurz.v1.CommurzService.CheckoutAll.
-func (c *commurzServiceClient) CheckoutAll(ctx context.Context, req *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.Empty], error) {
+func (c *commurzServiceClient) CheckoutAll(ctx context.Context, req *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.CheckoutAllResponse], error) {
 	return c.checkoutAll.CallUnary(ctx, req)
 }
 
@@ -238,10 +238,10 @@ type CommurzServiceHandler interface {
 	FindProductByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.Product], error)
 	ListBackofficeProducts(context.Context, *connect.Request[v1.ListBackofficeProductsRequest]) (*connect.Response[v1.ListBackofficeProductsResponse], error)
 	// order & inventory command
-	CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.Empty], error)
+	CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.CreateProductResponse], error)
 	UpdateProductStock(context.Context, *connect.Request[v1.UpdateProductStockRequest]) (*connect.Response[v1.Empty], error)
 	AddProductToCart(context.Context, *connect.Request[v1.AddProductToCartRequest]) (*connect.Response[v1.Empty], error)
-	CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.Empty], error)
+	CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.CheckoutAllResponse], error)
 }
 
 // NewCommurzServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -366,7 +366,7 @@ func (UnimplementedCommurzServiceHandler) ListBackofficeProducts(context.Context
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.ListBackofficeProducts is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.Empty], error) {
+func (UnimplementedCommurzServiceHandler) CreateProduct(context.Context, *connect.Request[v1.CreateProductRequest]) (*connect.Response[v1.CreateProductResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.CreateProduct is not implemented"))
 }
 
@@ -378,6 +378,6 @@ func (UnimplementedCommurzServiceHandler) AddProductToCart(context.Context, *con
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.AddProductToCart is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.Empty], error) {
+func (UnimplementedCommurzServiceHandler) CheckoutAll(context.Context, *connect.Request[v1.CheckoutAllRequest]) (*connect.Response[v1.CheckoutAllResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.CheckoutAll is not implemented"))
 }

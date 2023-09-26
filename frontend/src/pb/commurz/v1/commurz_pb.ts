@@ -1109,3 +1109,77 @@ export class FindAllProductListingResponse extends Message<FindAllProductListing
   }
 }
 
+/**
+ * @generated from message commurz.v1.CheckoutAllResponse
+ */
+export class CheckoutAllResponse extends Message<CheckoutAllResponse> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<CheckoutAllResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.CheckoutAllResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CheckoutAllResponse {
+    return new CheckoutAllResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CheckoutAllResponse {
+    return new CheckoutAllResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CheckoutAllResponse {
+    return new CheckoutAllResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CheckoutAllResponse | PlainMessage<CheckoutAllResponse> | undefined, b: CheckoutAllResponse | PlainMessage<CheckoutAllResponse> | undefined): boolean {
+    return proto3.util.equals(CheckoutAllResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message commurz.v1.CreateProductResponse
+ */
+export class CreateProductResponse extends Message<CreateProductResponse> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<CreateProductResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "commurz.v1.CreateProductResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateProductResponse {
+    return new CreateProductResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateProductResponse {
+    return new CreateProductResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateProductResponse {
+    return new CreateProductResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CreateProductResponse | PlainMessage<CreateProductResponse> | undefined, b: CreateProductResponse | PlainMessage<CreateProductResponse> | undefined): boolean {
+    return proto3.util.equals(CreateProductResponse, a, b);
+  }
+}
+

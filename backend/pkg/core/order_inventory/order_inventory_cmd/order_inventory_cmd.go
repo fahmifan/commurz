@@ -88,7 +88,7 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 func (service *OrderInventoryCmd) CreateProduct(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CreateProductRequest],
-) (res *connect.Response[commurzpbv1.Empty], err error) {
+) (res *connect.Response[commurzpbv1.CreateProductResponse], err error) {
 	productRepo := order_inventory.ProductReader{}
 	productWriter := order_inventory.ProductWriter{}
 
@@ -109,7 +109,11 @@ func (service *OrderInventoryCmd) CreateProduct(
 		return nil, core.ErrInternal
 	}
 
-	res = &connect.Response[commurzpbv1.Empty]{}
+	res = &connect.Response[commurzpbv1.CreateProductResponse]{
+		Msg: &commurzpbv1.CreateProductResponse{
+			Id: product.ID.String(),
+		},
+	}
 
 	return res, nil
 }
@@ -199,7 +203,7 @@ func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.
 func (service *OrderInventoryCmd) CheckoutAll(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CheckoutAllRequest],
-) (*connect.Response[commurzpbv1.Empty], error) {
+) (*connect.Response[commurzpbv1.CheckoutAllResponse], error) {
 	_, ok := auth.UserFromCtx(ctx)
 	if !ok {
 		return nil, core.ErrUnauthenticated
@@ -212,7 +216,6 @@ func (service *OrderInventoryCmd) CheckoutAll(
 
 	cartReader := order_inventory.CartReader{}
 	cartWriter := order_inventory.CartWriter{}
-	orderReader := order_inventory.OrderReader{}
 	orderWriter := order_inventory.OrderWriter{}
 	productWriter := order_inventory.ProductWriter{}
 
@@ -232,7 +235,7 @@ func (service *OrderInventoryCmd) CheckoutAll(
 			return fmt.Errorf("[CheckoutAll] CheckoutAll: %w", err)
 		}
 
-		_, err = orderWriter.CreateOrder(ctx, tx, order)
+		order, err = orderWriter.CreateOrder(ctx, tx, order)
 		if err != nil {
 			return fmt.Errorf("[CheckoutAll] CreateOrder: %w", err)
 		}
@@ -268,15 +271,14 @@ func (service *OrderInventoryCmd) CheckoutAll(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("[CheckoutAll] Transaction: %w", err)
+		logs.ErrCtx(ctx, err, "[CheckoutAll] Transaction")
+		return nil, core.ErrInternal
 	}
 
-	order, err = orderReader.FindOrderByID(ctx, service.DB, order.ID)
-	if err != nil {
-		return nil, fmt.Errorf("[CheckoutAll] FindOrderByID: %w", err)
+	res := &connect.Response[commurzpbv1.CheckoutAllResponse]{
+		Msg: &commurzpbv1.CheckoutAllResponse{
+			Id: order.ID.String(),
+		},
 	}
-
-	res := &connect.Response[commurzpbv1.Empty]{}
-
 	return res, nil
 }
