@@ -21,9 +21,9 @@ type ProductListing struct {
 
 type ProductListingReader struct{}
 
-func (app ProductListingReader) FindAllProducts(ctx context.Context, db *sql.DB, arg sqlcs.FindAllProductsForAppParams) (products []ProductListing, count int64, err error) {
+func (app ProductListingReader) FindAllProducts(ctx context.Context, db *sql.DB, arg sqlcs.FindAllProductListingParams) (products []ProductListing, count int64, err error) {
 	query := sqlcs.New(db)
-	xproducts, err := query.FindAllProductsForApp(ctx, arg)
+	xproducts, err := query.FindAllProductListing(ctx, arg)
 	if err != nil {
 		return nil, 0, err
 	}

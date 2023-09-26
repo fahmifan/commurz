@@ -12,10 +12,11 @@ import (
 )
 
 type Product struct {
-	ID      ulids.ULID
-	Name    string
-	Price   pkgmoney.Money
-	Version int64
+	ID          ulids.ULID
+	Name        string
+	Price       pkgmoney.Money
+	Version     int64
+	LatestStock int64
 
 	Stocks []ProductStock
 }

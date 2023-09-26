@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { AddProductToCartRequest, Cart, CheckoutAllRequest, CreateProductRequest, Empty, FindByIDRequest, ListAppProductsRequest, ListAppProductsResponse, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Product, UpdateProductStockRequest, User } from "./commurz_pb.js";
+import { AddProductToCartRequest, Cart, CheckoutAllRequest, CreateProductRequest, Empty, FindAllProductListingRequest, FindAllProductListingResponse, FindByIDRequest, ListBackofficeProductsRequest, ListBackofficeProductsResponse, ListUsersRequest, ListUsersResponse, Product, UpdateProductStockRequest, User } from "./commurz_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -46,12 +46,12 @@ export const CommurzService = {
     /**
      * storefront query
      *
-     * @generated from rpc commurz.v1.CommurzService.ListAppProducts
+     * @generated from rpc commurz.v1.CommurzService.FindAllProductListing
      */
-    listAppProducts: {
-      name: "ListAppProducts",
-      I: ListAppProductsRequest,
-      O: ListAppProductsResponse,
+    findAllProductListing: {
+      name: "FindAllProductListing",
+      I: FindAllProductListingRequest,
+      O: FindAllProductListingResponse,
       kind: MethodKind.Unary,
     },
     /**

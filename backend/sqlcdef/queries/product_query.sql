@@ -24,9 +24,11 @@ WHERE
 UPDATE products SET 
     name = @name, 
     price = @price,
-    latest_stock = @latest_stock
+    latest_stock = @latest_stock,
+    version = version + 1
 WHERE 
     id = @id 
+    AND version = @current_version
 RETURNING *;
 
 -- name: SaveProduct :one
@@ -44,12 +46,7 @@ INSERT INTO product_stocks (id, product_id, stock_in, stock_out)
 VALUES (@id, @product_id, @stock_in, @stock_out)
 RETURNING *;
 
--- --------------------------------------------------
--- App & Backoffice is seperated since they will 
--- diverge later
--- --------------------------------------------------
-
--- name: FindAllProductsForApp :many
+-- name: FindAllProductListing :many
 SELECT * FROM products
 WHERE 
     CASE WHEN @set_name::bool THEN ("name" LIKE '%' || @name || '%') ELSE TRUE END
@@ -57,7 +54,10 @@ ORDER BY id DESC
 LIMIT @page_limit
 OFFSET @page_offset;
 
--- name: CountAllProductsForApp :one
+-- name: CountAllProductsListing :one
 SELECT COUNT(*) FROM products
 WHERE 
     CASE WHEN @set_name::bool THEN ("name" LIKE '%' || @name || '%') ELSE TRUE END;
+
+-- name: UpdateProduct
+

@@ -122,7 +122,7 @@ message ListBackofficeProductsResponse {
   int32 count = 2;
 }
 
-message ListAppProductsRequest {
+message FindAllProductListingRequest {
   Pagination pagination = 1;
   string name = 2;
 }
@@ -135,7 +135,7 @@ message ProductListing {
   string text_price_idr = 5; // price in text format, e.g. "Rp 10.000"
 }
 
-message ListAppProductsResponse {
+message FindAllProductListingResponse {
   repeated ProductListing products = 1;
   int32 count = 2;
 }
@@ -148,7 +148,7 @@ service CommurzService {
   rpc FindUserByToken(Empty) returns (User) {}
 
   // storefront query
-  rpc ListAppProducts(ListAppProductsRequest) returns (ListAppProductsResponse) {}
+  rpc FindAllProductListing(FindAllProductListingRequest) returns (FindAllProductListingResponse) {}
 
   // order & inventory query
   rpc FindCartByUserToken(Empty) returns (Cart) {}

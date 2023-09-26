@@ -2,7 +2,7 @@ import { Box, Button, Card, Container, Flex, Grid, Group, Text, Title } from "@m
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CommurzServiceClient } from "../service";
 import { useDebouncedValue } from "@mantine/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as pb from '../pb/commurz/v1/commurz_pb'
 import { ResultFromPromise } from "../model";
 import { useNavigate } from "react-router-dom";
@@ -17,12 +17,18 @@ export function AppHome(): React.ReactNode {
 	const [total, setTotal] = useState(0)
 
 	const navigate = useNavigate()
+	const queryClient = useQueryClient()
+
+	useEffect(() => {
+		queryClient.invalidateQueries(['app', 'products'])
+		queryClient.resetQueries(['app', 'cart'])
+	}, [])
 
 	const { isLoading: isProductLoading, error, data: resListProducts } = useQuery({
-		queryKey: ['backoffice', 'products', page, size, debouncedName],
+		queryKey: ['app', 'products', page, size, debouncedName],
 		keepPreviousData: true,
 		queryFn: async () => {
-			const res = await CommurzServiceClient.listBackofficeProducts({
+			const res = await CommurzServiceClient.findAllProductListing({
 				name: debouncedName,
 				pagination: {
 					page: page,
@@ -45,21 +51,22 @@ export function AppHome(): React.ReactNode {
 		}
 	})
 
-	const queryClient = useQueryClient()
-
 	const { data: resCart } = useQuery({
-		queryKey: ['app', 'user-cart'],
+		queryKey: ['app', 'cart'],
 		queryFn: async () => {
 			const res = await CommurzServiceClient.findCartByUserToken({})
 			return res
-		}
+		},
+		retry(failureCount, error): boolean {
+			return failureCount > 3
+		},
 	})
 
 	const mutateAddToCart = useMutation({
-		mutationKey: ['app', 'user-cart'],
+		mutationKey: ['app', 'cart'],
 		mutationFn: async (val: pb.AddProductToCartRequest) => CommurzServiceClient.addProductToCart(val),
 		onSuccess: async () => {
-			await queryClient.invalidateQueries(['app', 'user-cart'])
+			await queryClient.invalidateQueries(['app', 'cart'])
 		}
 	})
 
@@ -90,8 +97,8 @@ export function AppHome(): React.ReactNode {
 		alert('Product added to cart')
 	}
 
-	function isProductOOS(product: pb.Product) {
-		return product.currentStock <= 0
+	function isProductOOS(product: pb.ProductListing) {
+		return product.latestStock <= 0
 	}
 
 	return <>
@@ -109,7 +116,7 @@ export function AppHome(): React.ReactNode {
 			<Grid py="md" grow>
 				{resListProducts?.products.map((product) => {
 					return <>
-						<Grid.Col span={4}>
+						<Grid.Col span={4} key={product.id}>
 							<Card key={product.id} padding="md" radius="md" withBorder maw={300}
 								opacity={isProductOOS(product) ? 0.7 : 1}>
 								<Card.Section>
@@ -119,7 +126,7 @@ export function AppHome(): React.ReactNode {
 									<Text size="xl" weight="bold" pb="sm">{product.name}</Text>
 									<Flex align="flex-start" justify="space-between">
 										<Text size="md">IDR {product.textPriceIdr}</Text>
-										<Text size="md">Stock: {product.currentStock.toString()}</Text>
+										<Text size="md">Stock: {product.latestStock.toString()}</Text>
 									</Flex>
 								</Card.Section>
 								<Card.Section p="md">

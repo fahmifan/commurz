@@ -1,5 +1,5 @@
 import { Box, Button, Card, Container, Group, Text, Title } from "@mantine/core";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { CommurzServiceClient } from "../service";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import { ResultFromPromise } from "../model";
 
 export function AppCheckout(): React.ReactNode {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
 
     const { data: resCart } = useQuery({
         queryKey: ['app', 'cart'],
@@ -23,6 +24,10 @@ export function AppCheckout(): React.ReactNode {
         mutationFn: async () => await CommurzServiceClient.checkoutAll({
             userId: resUser?.id as string,
         }),
+        onSuccess: async () => {
+            queryClient.invalidateQueries(['app', 'cart'])
+            queryClient.invalidateQueries(['app', 'products'])    
+        },
     })
 
     async function onOrder() {

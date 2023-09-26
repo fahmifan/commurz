@@ -42,9 +42,9 @@ const (
 	// CommurzServiceFindUserByTokenProcedure is the fully-qualified name of the CommurzService's
 	// FindUserByToken RPC.
 	CommurzServiceFindUserByTokenProcedure = "/commurz.v1.CommurzService/FindUserByToken"
-	// CommurzServiceListAppProductsProcedure is the fully-qualified name of the CommurzService's
-	// ListAppProducts RPC.
-	CommurzServiceListAppProductsProcedure = "/commurz.v1.CommurzService/ListAppProducts"
+	// CommurzServiceFindAllProductListingProcedure is the fully-qualified name of the CommurzService's
+	// FindAllProductListing RPC.
+	CommurzServiceFindAllProductListingProcedure = "/commurz.v1.CommurzService/FindAllProductListing"
 	// CommurzServiceFindCartByUserTokenProcedure is the fully-qualified name of the CommurzService's
 	// FindCartByUserToken RPC.
 	CommurzServiceFindCartByUserTokenProcedure = "/commurz.v1.CommurzService/FindCartByUserToken"
@@ -75,7 +75,7 @@ type CommurzServiceClient interface {
 	FindUserByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.User], error)
 	FindUserByToken(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.User], error)
 	// storefront query
-	ListAppProducts(context.Context, *connect.Request[v1.ListAppProductsRequest]) (*connect.Response[v1.ListAppProductsResponse], error)
+	FindAllProductListing(context.Context, *connect.Request[v1.FindAllProductListingRequest]) (*connect.Response[v1.FindAllProductListingResponse], error)
 	// order & inventory query
 	FindCartByUserToken(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Cart], error)
 	FindProductByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.Product], error)
@@ -112,9 +112,9 @@ func NewCommurzServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			baseURL+CommurzServiceFindUserByTokenProcedure,
 			opts...,
 		),
-		listAppProducts: connect.NewClient[v1.ListAppProductsRequest, v1.ListAppProductsResponse](
+		findAllProductListing: connect.NewClient[v1.FindAllProductListingRequest, v1.FindAllProductListingResponse](
 			httpClient,
-			baseURL+CommurzServiceListAppProductsProcedure,
+			baseURL+CommurzServiceFindAllProductListingProcedure,
 			opts...,
 		),
 		findCartByUserToken: connect.NewClient[v1.Empty, v1.Cart](
@@ -160,7 +160,7 @@ type commurzServiceClient struct {
 	listUsers              *connect.Client[v1.ListUsersRequest, v1.ListUsersResponse]
 	findUserByID           *connect.Client[v1.FindByIDRequest, v1.User]
 	findUserByToken        *connect.Client[v1.Empty, v1.User]
-	listAppProducts        *connect.Client[v1.ListAppProductsRequest, v1.ListAppProductsResponse]
+	findAllProductListing  *connect.Client[v1.FindAllProductListingRequest, v1.FindAllProductListingResponse]
 	findCartByUserToken    *connect.Client[v1.Empty, v1.Cart]
 	findProductByID        *connect.Client[v1.FindByIDRequest, v1.Product]
 	listBackofficeProducts *connect.Client[v1.ListBackofficeProductsRequest, v1.ListBackofficeProductsResponse]
@@ -185,9 +185,9 @@ func (c *commurzServiceClient) FindUserByToken(ctx context.Context, req *connect
 	return c.findUserByToken.CallUnary(ctx, req)
 }
 
-// ListAppProducts calls commurz.v1.CommurzService.ListAppProducts.
-func (c *commurzServiceClient) ListAppProducts(ctx context.Context, req *connect.Request[v1.ListAppProductsRequest]) (*connect.Response[v1.ListAppProductsResponse], error) {
-	return c.listAppProducts.CallUnary(ctx, req)
+// FindAllProductListing calls commurz.v1.CommurzService.FindAllProductListing.
+func (c *commurzServiceClient) FindAllProductListing(ctx context.Context, req *connect.Request[v1.FindAllProductListingRequest]) (*connect.Response[v1.FindAllProductListingResponse], error) {
+	return c.findAllProductListing.CallUnary(ctx, req)
 }
 
 // FindCartByUserToken calls commurz.v1.CommurzService.FindCartByUserToken.
@@ -232,7 +232,7 @@ type CommurzServiceHandler interface {
 	FindUserByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.User], error)
 	FindUserByToken(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.User], error)
 	// storefront query
-	ListAppProducts(context.Context, *connect.Request[v1.ListAppProductsRequest]) (*connect.Response[v1.ListAppProductsResponse], error)
+	FindAllProductListing(context.Context, *connect.Request[v1.FindAllProductListingRequest]) (*connect.Response[v1.FindAllProductListingResponse], error)
 	// order & inventory query
 	FindCartByUserToken(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Cart], error)
 	FindProductByID(context.Context, *connect.Request[v1.FindByIDRequest]) (*connect.Response[v1.Product], error)
@@ -265,9 +265,9 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect.Handler
 		svc.FindUserByToken,
 		opts...,
 	)
-	commurzServiceListAppProductsHandler := connect.NewUnaryHandler(
-		CommurzServiceListAppProductsProcedure,
-		svc.ListAppProducts,
+	commurzServiceFindAllProductListingHandler := connect.NewUnaryHandler(
+		CommurzServiceFindAllProductListingProcedure,
+		svc.FindAllProductListing,
 		opts...,
 	)
 	commurzServiceFindCartByUserTokenHandler := connect.NewUnaryHandler(
@@ -313,8 +313,8 @@ func NewCommurzServiceHandler(svc CommurzServiceHandler, opts ...connect.Handler
 			commurzServiceFindUserByIDHandler.ServeHTTP(w, r)
 		case CommurzServiceFindUserByTokenProcedure:
 			commurzServiceFindUserByTokenHandler.ServeHTTP(w, r)
-		case CommurzServiceListAppProductsProcedure:
-			commurzServiceListAppProductsHandler.ServeHTTP(w, r)
+		case CommurzServiceFindAllProductListingProcedure:
+			commurzServiceFindAllProductListingHandler.ServeHTTP(w, r)
 		case CommurzServiceFindCartByUserTokenProcedure:
 			commurzServiceFindCartByUserTokenHandler.ServeHTTP(w, r)
 		case CommurzServiceFindProductByIDProcedure:
@@ -350,8 +350,8 @@ func (UnimplementedCommurzServiceHandler) FindUserByToken(context.Context, *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.FindUserByToken is not implemented"))
 }
 
-func (UnimplementedCommurzServiceHandler) ListAppProducts(context.Context, *connect.Request[v1.ListAppProductsRequest]) (*connect.Response[v1.ListAppProductsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.ListAppProducts is not implemented"))
+func (UnimplementedCommurzServiceHandler) FindAllProductListing(context.Context, *connect.Request[v1.FindAllProductListingRequest]) (*connect.Response[v1.FindAllProductListingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("commurz.v1.CommurzService.FindAllProductListing is not implemented"))
 }
 
 func (UnimplementedCommurzServiceHandler) FindCartByUserToken(context.Context, *connect.Request[v1.Empty]) (*connect.Response[v1.Cart], error) {

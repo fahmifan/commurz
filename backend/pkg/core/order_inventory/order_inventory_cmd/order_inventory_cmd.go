@@ -67,7 +67,7 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 			return fmt.Errorf("[AddProductStock] SaveProductStock: %w", err)
 		}
 
-		_, err = productWriter.BumpProductVersion(ctx, tx, product)
+		_, err = productWriter.UpdateProduct(ctx, tx, product)
 		if err != nil {
 			return fmt.Errorf("[AddProductStock] BumpProductVersion: %w", err)
 		}
@@ -244,6 +244,7 @@ func (service *OrderInventoryCmd) CheckoutAll(
 
 		// TODO: we can improve this later
 		//
+		// use optimistic locking
 		// bump product version while saving the reduced product stocks to avoid race condition.
 		// product stocks should have rolledback if the product version is failed to bumped.
 		{
@@ -251,7 +252,7 @@ func (service *OrderInventoryCmd) CheckoutAll(
 			if err != nil {
 				return fmt.Errorf("[CheckoutAll] BulkSaveProductStocks: %w", err)
 			}
-			_, err = productWriter.BulkBumpProductVersion(ctx, tx, order.Products())
+			_, err = productWriter.BulkSaveProductLatestStock(ctx, tx, order.Products())
 			if err != nil {
 				return fmt.Errorf("[CheckoutAll] BulkBumpProductVersion: %w", err)
 			}

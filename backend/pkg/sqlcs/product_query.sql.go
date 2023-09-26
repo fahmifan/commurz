@@ -103,6 +103,61 @@ func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStock
 	return i, err
 }
 
+const findAllProductListing = `-- name: FindAllProductListing :many
+
+SELECT id, name, price, version, latest_stock FROM products
+WHERE 
+    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+ORDER BY id DESC
+LIMIT $4
+OFFSET $3
+`
+
+type FindAllProductListingParams struct {
+	SetName    bool
+	Name       sql.NullString
+	PageOffset int32
+	PageLimit  int32
+}
+
+// --------------------------------------------------
+// App & Backoffice is seperated since they will
+// diverge later
+// --------------------------------------------------
+func (q *Queries) FindAllProductListing(ctx context.Context, arg FindAllProductListingParams) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, findAllProductListing,
+		arg.SetName,
+		arg.Name,
+		arg.PageOffset,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Price,
+			&i.Version,
+			&i.LatestStock,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findAllProductStocksByIDs = `-- name: FindAllProductStocksByIDs :many
 SELECT id, product_id, stock_in, stock_out, created_at FROM product_stocks WHERE product_id = ANY($1::TEXT[])
 `
@@ -142,61 +197,6 @@ SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::T
 
 func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
 	rows, err := q.db.QueryContext(ctx, findAllProductsByIDs, pq.Array(productIds))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Product
-	for rows.Next() {
-		var i Product
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Price,
-			&i.Version,
-			&i.LatestStock,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const findAllProductsForApp = `-- name: FindAllProductsForApp :many
-
-SELECT id, name, price, version, latest_stock FROM products
-WHERE 
-    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
-ORDER BY id DESC
-LIMIT $4
-OFFSET $3
-`
-
-type FindAllProductsForAppParams struct {
-	SetName    bool
-	Name       sql.NullString
-	PageOffset int32
-	PageLimit  int32
-}
-
-// --------------------------------------------------
-// App & Backoffice is seperated since they will
-// diverge later
-// --------------------------------------------------
-func (q *Queries) FindAllProductsForApp(ctx context.Context, arg FindAllProductsForAppParams) ([]Product, error) {
-	rows, err := q.db.QueryContext(ctx, findAllProductsForApp,
-		arg.SetName,
-		arg.Name,
-		arg.PageOffset,
-		arg.PageLimit,
-	)
 	if err != nil {
 		return nil, err
 	}
@@ -320,17 +320,20 @@ const updateProduct = `-- name: UpdateProduct :one
 UPDATE products SET 
     name = $1, 
     price = $2,
-    latest_stock = $3
+    latest_stock = $3,
+    version = version + 1
 WHERE 
     id = $4 
+    AND version = $5
 RETURNING id, name, price, version, latest_stock
 `
 
 type UpdateProductParams struct {
-	Name        string
-	Price       int64
-	LatestStock int64
-	ID          string
+	Name           string
+	Price          int64
+	LatestStock    int64
+	ID             string
+	CurrentVersion int64
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -339,6 +342,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.Price,
 		arg.LatestStock,
 		arg.ID,
+		arg.CurrentVersion,
 	)
 	var i Product
 	err := row.Scan(

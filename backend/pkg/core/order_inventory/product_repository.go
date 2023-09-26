@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/fahmifan/commurz/pkg/parseutil"
@@ -134,10 +135,11 @@ func (repo ProductWriter) UpdateProduct(ctx context.Context, tx sqlcs.DBTX, prod
 	query := sqlcs.New(tx)
 
 	xproduct, err := query.UpdateProduct(ctx, sqlcs.UpdateProductParams{
-		ID:          product.ID.String(),
-		Name:        product.Name,
-		Price:       product.Price.Value(),
-		LatestStock: product.CurrentStock(),
+		ID:             product.ID.String(),
+		Name:           product.Name,
+		Price:          product.Price.Value(),
+		LatestStock:    product.CurrentStock(),
+		CurrentVersion: product.Version,
 	})
 	if err != nil {
 		return Product{}, fmt.Errorf("[UpdateProduct] UpdateProduct: %w", err)
@@ -192,6 +194,47 @@ func (repo ProductWriter) BulkBumpProductVersion(ctx context.Context, tx sqlcs.D
 	return updatedProducts, nil
 }
 
+func (repo ProductWriter) BulkSaveProductLatestStock(ctx context.Context, tx sqlcs.DBTX, products []Product) ([]Product, error) {
+	vals := make([]string, len(products))
+	for i, prod := range products {
+		vals[i] = fmt.Sprintf("('%s', %d, %d)",
+			prod.ID.String(),
+			prod.CurrentStock(),
+			prod.Version,
+		)
+	}
+
+	tmpVal := strings.Join(vals, ",")
+
+	query := fmt.Sprintf(`--sql
+		UPDATE products
+		SET 
+			latest_stock = tmp_val.tmp_latest_stock,
+			version = version + 1
+		FROM (VALUES
+			%s 
+		) AS tmp_val (tmp_id, tmp_latest_stock, tmp_version)
+		WHERE 
+			products.id = tmp_val.tmp_id
+			AND products.version = tmp_val.tmp_version
+		RETURNING %s
+		`, tmpVal, productFields)
+
+	rows, err := tx.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("[BulkSaveProductLatestStock] QueryContext: %w", err)
+	}
+	defer rows.Close()
+
+	xproducts, err := scanProducts(rows)
+	if err != nil {
+		return nil, fmt.Errorf("[BulkSaveProductLatestStock] scanProducts: %w", err)
+	}
+
+	products = lo.Map(xproducts, productFromSqlc)
+	return products, nil
+}
+
 func (repo ProductWriter) BulkSaveProductStocks(ctx context.Context, tx sqlcs.DBTX, stocks []ProductStock) ([]ProductStock, error) {
 	instBuilder := sq.Insert("product_stocks").
 		Columns("id", "product_id", "stock_in", "stock_out")
@@ -237,6 +280,31 @@ func scanProductStocks(rows *sql.Rows) (products []sqlcs.ProductStock, err error
 			&v.StockIn,
 			&v.StockOut,
 			&v.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		products = append(products, v)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return
+}
+
+const productFields = `id, name, price, latest_stock, version`
+
+func scanProducts(rows *sql.Rows) (products []sqlcs.Product, err error) {
+	for rows.Next() {
+		var v sqlcs.Product
+		if err := rows.Scan(
+			&v.ID,
+			&v.Name,
+			&v.Price,
+			&v.LatestStock,
+			&v.Version,
 		); err != nil {
 			return nil, err
 		}
