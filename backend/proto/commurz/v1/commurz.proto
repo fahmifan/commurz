@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package commurz.v1;
+
+option go_package = "github.com/fahmifan/commurz/pkg/pb/commurz/v1;commurzv1";
+
+// import "google/protobuf/timestamp.proto";
+
+// Resource definition
+message User {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 current_stock = 4;
+  string text_price_idr = 5; // price in text format, e.g. "Rp 10.000"
+  int64 version = 6;
+}
+
+message OrderProduct {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 current_stock = 4;
+}
+
+message Cart {
+  string id = 1;
+  string user_id = 2;
+  
+  User user = 3;
+  repeated CartItem items = 4;
+}
+
+message CartItem {
+  string id = 1;
+  string cart_id = 2;
+  string product_id = 3;
+  int64 quantity = 4;
+  int64 product_price = 5;
+  OrderProduct product = 6;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  int64 total_price = 3;
+}
+
+message OrderItem {
+  string id = 1;
+  string order_id = 2;
+  string product_id = 3;
+  int64 quantity = 4;
+  int64 product_price = 5;
+  OrderProduct product = 6;
+}
+
+// Requests definition
+message CreateUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  int64 price = 2;
+}
+
+message ChangeProductStockRequest {
+  string product_id = 1;
+  int64 stock_quantity = 2;
+}
+
+message UpdateProductStockRequest {
+  string product_id = 1;
+  int64 version = 2;
+  int64 stock_in = 3;
+  int64 stock_out = 4;
+}
+
+message Empty {}
+
+message AddProductToCartRequest {
+  string product_id = 1;
+  int64 quantity = 2;
+  
+  string user_id = 3; // TODO: remove this, change to auth token/session
+}
+
+message CheckoutAllRequest {
+  string user_id = 1; // TODO: remove this, change to auth token/session
+}
+
+message FindByIDRequest {
+  string id = 1;
+}
+
+message ListUsersRequest {}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message ListBackofficeProductsRequest {
+  Pagination pagination = 1;
+  string name = 2;
+}
+
+message ListBackofficeProductsResponse {
+  repeated Product products = 1;
+  int32 count = 2;
+}
+
+message FindAllProductListingRequest {
+  Pagination pagination = 1;
+  string name = 2;
+}
+
+message ProductListing {
+  string id = 1;
+  string name = 2;
+  int64 price = 3;
+  int64 latest_stock = 4;
+  string text_price_idr = 5; // price in text format, e.g. "Rp 10.000"
+}
+
+message FindAllProductListingResponse {
+  repeated ProductListing products = 1;
+  int32 count = 2;
+}
+
+message CheckoutAllResponse {
+  string id = 1;
+}
+
+message CreateProductResponse {
+  string id = 1;
+}
+
+// Service definition
+service CommurzService {
+  // user
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {}
+  rpc FindUserByID(FindByIDRequest) returns (User) {}
+  rpc FindUserByToken(Empty) returns (User) {}
+
+  // storefront query
+  rpc FindAllProductListing(FindAllProductListingRequest) returns (FindAllProductListingResponse) {}
+
+  // order & inventory query
+  rpc FindCartByUserToken(Empty) returns (Cart) {}
+  rpc FindProductByID(FindByIDRequest) returns (Product) {}
+  rpc ListBackofficeProducts(ListBackofficeProductsRequest) returns (ListBackofficeProductsResponse) {}
+  
+  // order & inventory command
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {}
+  rpc UpdateProductStock(UpdateProductStockRequest) returns (Empty) {}
+  rpc AddProductToCart(AddProductToCartRequest) returns (Empty) {}
+  rpc CheckoutAll(CheckoutAllRequest) returns (CheckoutAllResponse) {}
+}

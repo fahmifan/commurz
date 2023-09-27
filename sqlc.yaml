@@ -1,9 +1,0 @@
-version: 2
-sql:
-  - engine: "sqlite"
-    schema: "sqlcdef/schema.sql"
-    queries: "sqlcdef/queries"
-    gen:
-      go:
-        package: "sqlcs"
-        out: "pkg/internal/sqlcs"
