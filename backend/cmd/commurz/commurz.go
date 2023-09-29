@@ -14,7 +14,6 @@ import (
 	"github.com/fahmifan/commurz/pkg/service"
 	"github.com/fahmifan/commurz/pkg/web/webserver"
 	_ "github.com/lib/pq"
-	migrate "github.com/rubenv/sql-migrate"
 )
 
 func main() {
@@ -30,10 +29,6 @@ func run() error {
 	db, err := sql.Open("postgres", config.PostgresDSN())
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
-	}
-
-	if err := migrateDB(db); err != nil {
-		return err
 	}
 
 	acl, err := auth.NewACL()
@@ -74,19 +69,4 @@ func run() error {
 	ws := webserver.NewWebserver(svc, config.Port(), cookieHandler)
 
 	return ws.Run()
-}
-
-func migrateDB(db *sql.DB) error {
-	migrations := &migrate.FileMigrationSource{
-		Dir: "sqlcdef/migrations",
-	}
-
-	n, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("migrate up:", n)
-
-	return nil
 }

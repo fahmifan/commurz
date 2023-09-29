@@ -12,10 +12,12 @@ import (
 )
 
 type ProductListing struct {
-	ID          ulids.ULID
-	Name        string
-	Price       pkgmoney.Money
-	Version     int64
+	ID      ulids.ULID
+	Name    string
+	Price   pkgmoney.Money
+	Version int64
+	// LatestStock is a denormalized field calculated from the ProductStocks.
+	// It uses eventual consistentcy model.
 	LatestStock int64
 }
 

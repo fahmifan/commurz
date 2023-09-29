@@ -103,6 +103,17 @@ func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStock
 	return i, err
 }
 
+const createProductStockLock = `-- name: CreateProductStockLock :one
+INSERT INTO product_stock_lock (id, product_id) VALUES ($1, $1) RETURNING id, product_id
+`
+
+func (q *Queries) CreateProductStockLock(ctx context.Context, productID string) (ProductStockLock, error) {
+	row := q.db.QueryRowContext(ctx, createProductStockLock, productID)
+	var i ProductStockLock
+	err := row.Scan(&i.ID, &i.ProductID)
+	return i, err
+}
+
 const findAllProductListing = `-- name: FindAllProductListing :many
 SELECT id, name, price, version, latest_stock FROM products
 WHERE 
@@ -300,6 +311,17 @@ func (q *Queries) FindProductByID(ctx context.Context, id string) (Product, erro
 		&i.Version,
 		&i.LatestStock,
 	)
+	return i, err
+}
+
+const lockProductStock = `-- name: LockProductStock :one
+SELECT id, product_id FROM product_stock_lock WHERE product_id = ANY($1::TEXT[]) FOR UPDATE
+`
+
+func (q *Queries) LockProductStock(ctx context.Context, productID []string) (ProductStockLock, error) {
+	row := q.db.QueryRowContext(ctx, lockProductStock, pq.Array(productID))
+	var i ProductStockLock
+	err := row.Scan(&i.ID, &i.ProductID)
 	return i, err
 }
 

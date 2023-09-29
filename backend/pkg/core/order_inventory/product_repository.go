@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/fahmifan/commurz/pkg/core"
 	"github.com/fahmifan/commurz/pkg/parseutil"
 	"github.com/fahmifan/commurz/pkg/preloads"
 	"github.com/fahmifan/commurz/pkg/sqlcs"
@@ -293,6 +294,32 @@ func (repo ProductWriter) BulkSaveProductStocks(ctx context.Context, tx sqlcs.DB
 	insertedStocks := lo.Map(xstock, productStockFromSqlc)
 
 	return insertedStocks, nil
+}
+
+type ProductStockLocker struct{}
+
+func (ProductStockLocker) LockProductStocks(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) error {
+	query := sqlcs.New(tx)
+
+	// if no productIDs, do nothing
+	_, err := query.LockProductStock(ctx, parseutil.StringULIDs(productIDs))
+	if err != nil && !core.IsNotFoundErr(err) {
+		return fmt.Errorf("[LockProductStocks] LockProductStocks: %w", err)
+	}
+
+	return nil
+}
+
+func (ProductStockLocker) CreateProductStockLock(ctx context.Context, tx sqlcs.DBTX, productID ulids.ULID) error {
+	query := sqlcs.New(tx)
+
+	// if no productIDs, do nothing
+	_, err := query.CreateProductStockLock(ctx, productID.String())
+	if err != nil {
+		return fmt.Errorf("[CreateProductStockLock] CreateProductStockLock: %w", err)
+	}
+
+	return nil
 }
 
 func scanProductStocks(rows *sql.Rows) (products []sqlcs.ProductStock, err error) {

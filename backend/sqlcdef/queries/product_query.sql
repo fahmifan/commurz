@@ -7,6 +7,12 @@ SELECT * FROM products WHERE id = ANY(@ids::TEXT[]) FOR UPDATE;
 -- name: FindAllProductsByIDs :many
 SELECT * FROM products WHERE id = ANY(@product_ids::TEXT[]);
 
+-- name: LockProductStock :one
+SELECT * FROM product_stock_lock WHERE product_id = ANY(@product_id::TEXT[]) FOR UPDATE;
+
+-- name: CreateProductStockLock :one
+INSERT INTO product_stock_lock (id, product_id) VALUES (@product_id, @product_id) RETURNING *;
+
 -- name: FindAllProductStocksByIDs :many
 SELECT * FROM product_stocks WHERE product_id = ANY(@product_ids::TEXT[]);
 

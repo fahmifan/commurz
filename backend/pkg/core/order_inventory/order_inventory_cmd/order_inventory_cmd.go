@@ -34,11 +34,18 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 	productRepo := order_inventory.ProductReader{}
 	productWriter := order_inventory.ProductWriter{}
 	product := order_inventory.Product{}
+	productStockLocker := order_inventory.ProductStockLocker{}
 
+	// this code uses hybrid locking, it will try to acquire row level locks for the product being updated.
 	err = core.Transaction(ctx, service.DB, func(tx *sql.Tx) error {
 		productID, err := parseutil.ParseULID(req.Msg.GetProductId())
 		if err != nil {
 			return fmt.Errorf("[AddProductStock] ParseULID: %w", err)
+		}
+
+		err = productStockLocker.LockProductStocks(ctx, tx, []ulids.ULID{productID})
+		if err != nil {
+			return fmt.Errorf("[AddProductStock] LockProductStocks: %w", err)
 		}
 
 		product, err = productRepo.FindProductByID(ctx, tx, productID)
@@ -67,6 +74,7 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 			return fmt.Errorf("[AddProductStock] SaveProductStock: %w", err)
 		}
 
+		// do optimistic locking
 		_, err = productWriter.UpdateProduct(ctx, tx, product)
 		if err != nil {
 			return fmt.Errorf("[AddProductStock] BumpProductVersion: %w", err)
@@ -89,8 +97,8 @@ func (service *OrderInventoryCmd) CreateProduct(
 	ctx context.Context,
 	req *connect.Request[commurzpbv1.CreateProductRequest],
 ) (res *connect.Response[commurzpbv1.CreateProductResponse], err error) {
-	productRepo := order_inventory.ProductReader{}
 	productWriter := order_inventory.ProductWriter{}
+	productStockLocker := order_inventory.ProductStockLocker{}
 
 	product, err := order_inventory.CreateProduct(req.Msg.Name, pkgmoney.New(req.Msg.Price))
 	if err != nil {
@@ -103,9 +111,8 @@ func (service *OrderInventoryCmd) CreateProduct(
 		return nil, core.ErrInternal
 	}
 
-	product, err = productRepo.FindProductByID(ctx, service.DB, product.ID)
-	if err != nil {
-		logs.ErrCtx(ctx, err, "[CreateProduct] FindProductByID")
+	if err = productStockLocker.CreateProductStockLock(ctx, service.DB, product.ID); err != nil {
+		logs.ErrCtx(ctx, err, "[CreateProduct] CreateProductStockLock")
 		return nil, core.ErrInternal
 	}
 

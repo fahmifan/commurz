@@ -19,9 +19,14 @@ func init() {
 
 type CartReader struct{}
 
-// lockProductStock is used for locking the row for update
-// not the nicest solution, but should work for now.
-// copy paste the FindCartByUserID function will makes us duplicate cartItems and all the preload logic down the functions.
+// FindCartByUserID will find cart by user id and preload the cart items.
+//
+// The lockProductStock is used for locking the row for update,
+// when set to true, it will lock the product stock using the product_stock_lock table.
+//
+// The locking mechanism is not the nicest solution, but should work for now.
+// copy paste the FindCartByUserID function will makes too much duplication of
+// cartItems and all the preload logic down the functions.
 func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID, lockProductStock bool) (Cart, error) {
 	queries := sqlcs.New(tx)
 
@@ -65,7 +70,9 @@ func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs
 		SetItem:   func(item *CartItem, target Product) { item.Product = target },
 		FetchItems: func() ([]Product, error) {
 			if lockProductStock {
-				return productRader.FindAllProductsByIDslockProductStock(ctx, tx, productIDs)
+				if err := (ProductStockLocker{}).LockProductStocks(ctx, tx, productIDs); err != nil {
+					return nil, fmt.Errorf("[FindCartItemsByIDs] LockProductStocks: %w", err)
+				}
 			}
 			return productRader.FindProductsByIDs(ctx, tx, productIDs)
 		},

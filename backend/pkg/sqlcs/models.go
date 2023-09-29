@@ -54,6 +54,11 @@ type ProductStock struct {
 	CreatedAt time.Time
 }
 
+type ProductStockLock struct {
+	ID        string
+	ProductID string
+}
+
 type User struct {
 	ID           uuid.UUID
 	Email        string
