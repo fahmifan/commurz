@@ -133,7 +133,8 @@ func (service *OrderInventoryCmd) AddProductToCart(
 	}
 
 	cartWriter := order_inventory.CartWriter{}
-	cart, err := service.getOrCreateCart(ctx, service.DB, userID)
+	lockProductStock := false
+	cart, err := service.getOrCreateCart(ctx, service.DB, userID, lockProductStock)
 	if err != nil {
 		logs.ErrCtx(ctx, err, "[AddProductToCart] getOrCreateCart")
 		return nil, connect.NewError(connect.CodeInternal, core.ErrInternal)
@@ -171,11 +172,11 @@ func (service *OrderInventoryCmd) AddProductToCart(
 	return res, nil
 }
 
-func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID) (cart order_inventory.Cart, err error) {
+func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID, lockProductStock bool) (cart order_inventory.Cart, err error) {
 	cartReader := order_inventory.CartReader{}
 	cartWriter := order_inventory.CartWriter{}
 
-	cart, err = cartReader.FindCartByUserID(ctx, tx, userID)
+	cart, err = cartReader.FindCartByUserID(ctx, tx, userID, lockProductStock)
 
 	if err != nil && !core.IsNotFoundErr(err) {
 		return order_inventory.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
@@ -192,7 +193,7 @@ func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.
 	}
 
 	// refresh cart data
-	cart, err = cartReader.FindCartByUserID(ctx, tx, userID)
+	cart, err = cartReader.FindCartByUserID(ctx, tx, userID, lockProductStock)
 	if err != nil {
 		return order_inventory.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
 	}
@@ -224,8 +225,12 @@ func (service *OrderInventoryCmd) CheckoutAll(
 	order := order_inventory.Order{}
 	var checkOutStocks []order_inventory.ProductStock
 
+	// This code use hybrid locking, it will try to acquire row level locks for all products being checkedout.
+	// Then it will do optimistic update (using "version" field) when writing to the product_stocks table.
 	err = core.Transaction(ctx, service.DB, func(tx *sql.Tx) error {
-		cart, err := cartReader.FindCartByUserID(ctx, tx, userID)
+		// do pessimistic locking
+		lockProductStock := true
+		cart, err := cartReader.FindCartByUserID(ctx, tx, userID, lockProductStock)
 		if err != nil {
 			return fmt.Errorf("[CheckoutAll] FindCartByUserID: %w", err)
 		}
@@ -245,9 +250,7 @@ func (service *OrderInventoryCmd) CheckoutAll(
 			return fmt.Errorf("[CheckoutAll] BulkSaveOrderItems: %w", err)
 		}
 
-		// TODO: we can improve this later
-		//
-		// use optimistic locking
+		// do optimistic locking
 		// bump product version while saving the reduced product stocks to avoid race condition.
 		// product stocks should have rolledback if the product version is failed to bumped.
 		{

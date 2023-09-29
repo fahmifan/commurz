@@ -99,6 +99,30 @@ func (repo ProductReader) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, 
 	return products, nil
 }
 
+func (repo ProductReader) FindAllProductsByIDslockProductStock(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]Product, error) {
+	query := sqlcs.New(tx)
+
+	xproducts, err := query.FindAllProductsByIDs(ctx, parseutil.StringULIDs(productIDs))
+	if err != nil {
+		return nil, fmt.Errorf("[FindProductsByIDs] FindAllProductsByIDs: %w", err)
+	}
+
+	products, err := preloads.PreloadMany[Product, ProductStock, ulids.ULID]{
+		Targets:   lo.Map(xproducts, productFromSqlc),
+		RefItem:   func(item ProductStock) ulids.ULID { return item.ProductID },
+		RefTarget: func(target Product) ulids.ULID { return target.ID },
+		SetItem:   func(target *Product, items []ProductStock) { target.Stocks = items },
+		FetchItems: func() ([]ProductStock, error) {
+			return repo.FindAllProductStocksByIDs(ctx, tx, productIDs)
+		},
+	}.Preload()
+	if err != nil {
+		return nil, fmt.Errorf("[FindProductsByIDs] FindAllProductStocksByIDs: %w", err)
+	}
+
+	return products, nil
+}
+
 func (ProductReader) FindAllProductStocksByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]ProductStock, error) {
 	if len(productIDs) == 0 {
 		return nil, nil

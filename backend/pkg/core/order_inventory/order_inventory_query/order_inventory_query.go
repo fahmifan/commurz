@@ -70,7 +70,7 @@ func (service *OrderInventoryQuery) FindCartByUserToken(
 	}
 
 	cartReader := order_inventory.CartReader{}
-	cart, err := cartReader.FindCartByUserID(ctx, service.DB, userID)
+	cart, err := cartReader.FindCartByUserID(ctx, service.DB, userID, false)
 	if core.IsNotFoundErr(err) {
 		return nil, core.ErrNotFound
 	}

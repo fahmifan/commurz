@@ -36,24 +36,6 @@ func (q *Queries) BumpProductVersion(ctx context.Context, arg BumpProductVersion
 	return i, err
 }
 
-const countAllProductsForApp = `-- name: CountAllProductsForApp :one
-SELECT COUNT(*) FROM products
-WHERE 
-    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
-`
-
-type CountAllProductsForAppParams struct {
-	SetName bool
-	Name    sql.NullString
-}
-
-func (q *Queries) CountAllProductsForApp(ctx context.Context, arg CountAllProductsForAppParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countAllProductsForApp, arg.SetName, arg.Name)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const countAllProductsForBackoffice = `-- name: CountAllProductsForBackoffice :one
 SELECT COUNT(*) FROM products
 WHERE 
@@ -67,6 +49,24 @@ type CountAllProductsForBackofficeParams struct {
 
 func (q *Queries) CountAllProductsForBackoffice(ctx context.Context, arg CountAllProductsForBackofficeParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countAllProductsForBackoffice, arg.SetName, arg.Name)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAllProductsListing = `-- name: CountAllProductsListing :one
+SELECT COUNT(*) FROM products
+WHERE 
+    CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
+`
+
+type CountAllProductsListingParams struct {
+	SetName bool
+	Name    sql.NullString
+}
+
+func (q *Queries) CountAllProductsListing(ctx context.Context, arg CountAllProductsListingParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countAllProductsListing, arg.SetName, arg.Name)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -104,7 +104,6 @@ func (q *Queries) CreateProductStock(ctx context.Context, arg CreateProductStock
 }
 
 const findAllProductListing = `-- name: FindAllProductListing :many
-
 SELECT id, name, price, version, latest_stock FROM products
 WHERE 
     CASE WHEN $1::bool THEN ("name" LIKE '%' || $2 || '%') ELSE TRUE END
@@ -120,10 +119,6 @@ type FindAllProductListingParams struct {
 	PageLimit  int32
 }
 
-// --------------------------------------------------
-// App & Backoffice is seperated since they will
-// diverge later
-// --------------------------------------------------
 func (q *Queries) FindAllProductListing(ctx context.Context, arg FindAllProductListingParams) ([]Product, error) {
 	rows, err := q.db.QueryContext(ctx, findAllProductListing,
 		arg.SetName,
@@ -222,6 +217,23 @@ func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string)
 		return nil, err
 	}
 	return items, nil
+}
+
+const findAllProductsByIDslockProductStock = `-- name: FindAllProductsByIDslockProductStock :one
+SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::TEXT[]) FOR UPDATE
+`
+
+func (q *Queries) FindAllProductsByIDslockProductStock(ctx context.Context, ids []string) (Product, error) {
+	row := q.db.QueryRowContext(ctx, findAllProductsByIDslockProductStock, pq.Array(ids))
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
 }
 
 const findAllProductsForBackoffice = `-- name: FindAllProductsForBackoffice :many

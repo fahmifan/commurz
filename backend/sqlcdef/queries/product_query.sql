@@ -1,6 +1,9 @@
 -- name: FindProductByID :one
 SELECT * FROM products WHERE id = @id;
 
+-- name: FindAllProductsByIDslockProductStock :one
+SELECT * FROM products WHERE id = ANY(@ids::TEXT[]) FOR UPDATE;
+
 -- name: FindAllProductsByIDs :many
 SELECT * FROM products WHERE id = ANY(@product_ids::TEXT[]);
 
