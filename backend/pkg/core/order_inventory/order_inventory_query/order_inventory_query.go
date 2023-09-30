@@ -36,13 +36,10 @@ func (service *OrderInventoryQuery) ListBackofficeProducts(
 	}
 
 	productReader := order_inventory.ProductBackofficeReader{}
-
-	arg := NewListProductArg(req.Msg)
-
-	products, count, err := productReader.FindAllProducts(ctx, service.DB, arg)
+	products, count, err := productReader.FindAllProducts(ctx, service.DB, NewListProductArg(req.Msg))
 	if err != nil {
 		logs.ErrCtx(ctx, err, "ListProducts: FindAllProducts")
-		return nil, connect.NewError(connect.CodeInternal, core.ErrInternal)
+		return nil, core.ErrSvcInternal
 	}
 
 	res := &connect.Response[commurzv1.ListBackofficeProductsResponse]{
@@ -66,17 +63,17 @@ func (service *OrderInventoryQuery) FindCartByUserToken(
 
 	userID, err := uuid.Parse(user.GUID)
 	if err != nil {
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	cartReader := order_inventory.CartReader{}
 	cart, err := cartReader.FindCartByUserID(ctx, service.DB, userID, false)
-	if core.IsNotFoundErr(err) {
-		return nil, core.ErrNotFound
+	if core.IsDBNotFoundErr(err) {
+		return nil, core.ErrSvcNotFound
 	}
 	if err != nil {
 		logs.ErrCtx(ctx, err, "FindCartByUserToken: FindCartByUserID")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res = &connect.Response[commurzv1.Cart]{
@@ -100,9 +97,12 @@ func (service *OrderInventoryQuery) FindProductByID(
 
 	productReader := order_inventory.ProductReader{}
 	product, err := productReader.FindProductByID(ctx, service.DB, id)
+	if core.IsDBNotFoundErr(err) {
+		return nil, core.ErrSvcNotFound
+	}
 	if err != nil {
 		logs.ErrCtx(ctx, err, "FindProductByID: FindProductByID")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res := &connect.Response[commurzv1.Product]{

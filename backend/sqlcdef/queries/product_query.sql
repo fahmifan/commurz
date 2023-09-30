@@ -1,11 +1,17 @@
 -- name: FindProductByID :one
 SELECT * FROM products WHERE id = @id;
 
+-- name: FindAllProductByIDFroUpdate :one
+SELECT * FROM products WHERE id = @product_id FOR UPDATE;
+
 -- name: FindAllProductsByIDslockProductStock :one
 SELECT * FROM products WHERE id = ANY(@ids::TEXT[]) FOR UPDATE;
 
 -- name: FindAllProductsByIDs :many
 SELECT * FROM products WHERE id = ANY(@product_ids::TEXT[]);
+
+-- name: FindAllProductsByIDsFroUpdate :many
+SELECT * FROM products WHERE id = ANY(@product_ids::TEXT[]) FOR UPDATE;
 
 -- name: LockProductStock :one
 SELECT * FROM product_stock_lock WHERE product_id = ANY(@product_id::TEXT[]) FOR UPDATE;

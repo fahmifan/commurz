@@ -76,6 +76,24 @@ func (ProductReader) FindProductByID(ctx context.Context, tx sqlcs.DBTX, id ulid
 	return product, nil
 }
 
+func (ProductReader) FindProductByIDForUpdate(ctx context.Context, tx sqlcs.DBTX, id ulids.ULID) (Product, error) {
+	queries := sqlcs.New(tx)
+	sqlcProduct, err := queries.FindAllProductByIDFroUpdate(ctx, id.String())
+	if err != nil {
+		return Product{}, fmt.Errorf("[FindProductByID] FindProductByID: %w", err)
+	}
+
+	productStocks, err := ProductReader{}.FindAllProductStocksByIDs(ctx, tx, []ulids.ULID{id})
+	if err != nil {
+		return Product{}, fmt.Errorf("[FindProductByID] FindAllProductStocksByIDs: %w", err)
+	}
+
+	product := productFromSqlc(sqlcProduct, 0)
+	product.Stocks = productStocks
+
+	return product, nil
+}
+
 func (repo ProductReader) FindProductsByIDs(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) ([]Product, error) {
 	query := sqlcs.New(tx)
 
@@ -301,9 +319,8 @@ type ProductStockLocker struct{}
 func (ProductStockLocker) LockProductStocks(ctx context.Context, tx sqlcs.DBTX, productIDs []ulids.ULID) error {
 	query := sqlcs.New(tx)
 
-	// if no productIDs, do nothing
 	_, err := query.LockProductStock(ctx, parseutil.StringULIDs(productIDs))
-	if err != nil && !core.IsNotFoundErr(err) {
+	if err != nil && !core.IsDBNotFoundErr(err) {
 		return fmt.Errorf("[LockProductStocks] LockProductStocks: %w", err)
 	}
 
@@ -313,7 +330,6 @@ func (ProductStockLocker) LockProductStocks(ctx context.Context, tx sqlcs.DBTX, 
 func (ProductStockLocker) CreateProductStockLock(ctx context.Context, tx sqlcs.DBTX, productID ulids.ULID) error {
 	query := sqlcs.New(tx)
 
-	// if no productIDs, do nothing
 	_, err := query.CreateProductStockLock(ctx, productID.String())
 	if err != nil {
 		return fmt.Errorf("[CreateProductStockLock] CreateProductStockLock: %w", err)

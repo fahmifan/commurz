@@ -34,7 +34,6 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 	productRepo := order_inventory.ProductReader{}
 	productWriter := order_inventory.ProductWriter{}
 	product := order_inventory.Product{}
-	productStockLocker := order_inventory.ProductStockLocker{}
 
 	// this code uses hybrid locking, it will try to acquire row level locks for the product being updated.
 	err = core.Transaction(ctx, service.DB, func(tx *sql.Tx) error {
@@ -43,18 +42,9 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 			return fmt.Errorf("[AddProductStock] ParseULID: %w", err)
 		}
 
-		err = productStockLocker.LockProductStocks(ctx, tx, []ulids.ULID{productID})
-		if err != nil {
-			return fmt.Errorf("[AddProductStock] LockProductStocks: %w", err)
-		}
-
-		product, err = productRepo.FindProductByID(ctx, tx, productID)
+		product, err = productRepo.FindProductByIDForUpdate(ctx, tx, productID)
 		if err != nil {
 			return fmt.Errorf("[AddProductStock] FindProductByID: %w", err)
-		}
-
-		if !product.SameVersion(req.Msg.GetVersion()) {
-			return fmt.Errorf("[AddProductStock] VersionMismatch")
 		}
 
 		var stockIn, stockOut order_inventory.ProductStock
@@ -84,8 +74,11 @@ func (service *OrderInventoryCmd) UpdateProductStock(
 	})
 
 	if err != nil {
+		if order_inventory.IsDomainErr(err) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
 		logs.ErrCtx(ctx, err, "UpdateProductStock: Transaction")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res = &connect.Response[commurzpbv1.Empty]{}
@@ -108,12 +101,12 @@ func (service *OrderInventoryCmd) CreateProduct(
 	product, err = productWriter.SaveProduct(ctx, service.DB, product)
 	if err != nil {
 		logs.ErrCtx(ctx, err, "[CreateProduct] SaveProduct")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	if err = productStockLocker.CreateProductStockLock(ctx, service.DB, product.ID); err != nil {
 		logs.ErrCtx(ctx, err, "[CreateProduct] CreateProductStockLock")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res = &connect.Response[commurzpbv1.CreateProductResponse]{
@@ -144,7 +137,7 @@ func (service *OrderInventoryCmd) AddProductToCart(
 	cart, err := service.getOrCreateCart(ctx, service.DB, userID, lockProductStock)
 	if err != nil {
 		logs.ErrCtx(ctx, err, "[AddProductToCart] getOrCreateCart")
-		return nil, connect.NewError(connect.CodeInternal, core.ErrInternal)
+		return nil, core.ErrSvcInternal
 	}
 
 	err = core.Transaction(ctx, service.DB, func(tx *sql.Tx) error {
@@ -170,8 +163,11 @@ func (service *OrderInventoryCmd) AddProductToCart(
 		return nil
 	})
 	if err != nil {
+		if order_inventory.IsDomainErr(err) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
 		logs.ErrCtx(ctx, err, "[AddProductToCart] Transaction")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res := &connect.Response[commurzpbv1.Empty]{}
@@ -185,7 +181,7 @@ func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.
 
 	cart, err = cartReader.FindCartByUserID(ctx, tx, userID, lockProductStock)
 
-	if err != nil && !core.IsNotFoundErr(err) {
+	if err != nil && !core.IsDBNotFoundErr(err) {
 		return order_inventory.Cart{}, fmt.Errorf("[getOrCreateCart] FindCartByUserID: %w", err)
 	}
 
@@ -195,7 +191,7 @@ func (service *OrderInventoryCmd) getOrCreateCart(ctx context.Context, tx sqlcs.
 
 	cart = order_inventory.NewCart(userID)
 	_, err = cartWriter.SaveCart(ctx, tx, cart)
-	if err != nil && !core.IsNotFoundErr(err) {
+	if err != nil && !core.IsDBNotFoundErr(err) {
 		return order_inventory.Cart{}, fmt.Errorf("[getOrCreateCart] SaveCart: %w", err)
 	}
 
@@ -214,7 +210,7 @@ func (service *OrderInventoryCmd) CheckoutAll(
 ) (*connect.Response[commurzpbv1.CheckoutAllResponse], error) {
 	_, ok := auth.UserFromCtx(ctx)
 	if !ok {
-		return nil, core.ErrUnauthenticated
+		return nil, core.ErrSvcUnauthenticated
 	}
 
 	userID, err := uuid.Parse(req.Msg.UserId)
@@ -281,8 +277,11 @@ func (service *OrderInventoryCmd) CheckoutAll(
 		return nil
 	})
 	if err != nil {
+		if order_inventory.IsDomainErr(err) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
 		logs.ErrCtx(ctx, err, "[CheckoutAll] Transaction")
-		return nil, core.ErrInternal
+		return nil, core.ErrSvcInternal
 	}
 
 	res := &connect.Response[commurzpbv1.CheckoutAllResponse]{

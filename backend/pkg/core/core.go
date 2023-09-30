@@ -15,10 +15,10 @@ import (
 )
 
 var (
-	ErrInternal        = connect.NewError(connect.CodeInternal, errors.New("internal error"))
-	ErrNotFound        = connect.NewError(connect.CodeNotFound, errors.New("not found"))
-	ErrUnauthorized    = connect.NewError(connect.CodePermissionDenied, errors.New("unauthorized"))
-	ErrUnauthenticated = connect.NewError(connect.CodeUnauthenticated, errors.New("unauthenticated"))
+	ErrSvcInternal        = connect.NewError(connect.CodeInternal, errors.New("internal error"))
+	ErrSvcNotFound        = connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	ErrSvcUnauthorized    = connect.NewError(connect.CodePermissionDenied, errors.New("unauthorized"))
+	ErrSvcUnauthenticated = connect.NewError(connect.CodeUnauthenticated, errors.New("unauthenticated"))
 )
 
 type Ctx struct {
@@ -29,12 +29,12 @@ type Ctx struct {
 func (service *Ctx) CanUser(ctx context.Context, act acl.Action, rsc acl.Resource) error {
 	user, ok := auth.UserFromCtx(ctx)
 	if !ok {
-		return ErrUnauthenticated
+		return ErrSvcUnauthenticated
 	}
 
 	err := service.ACL.Can(user.Role, act, rsc)
 	if err != nil {
-		return ErrUnauthorized
+		return ErrSvcUnauthorized
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func Transaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error) error 
 	return txErr
 }
 
-func IsNotFoundErr(err error) bool {
+func IsDBNotFoundErr(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }
 

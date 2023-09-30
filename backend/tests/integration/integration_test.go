@@ -51,7 +51,6 @@ func (suite *IntegrationTestSuite) TestRegister() {
 
 	suite.NoError(err)
 	suite.Equal(http.StatusOK, res.StatusCode())
-	fmt.Println(res.String())
 }
 
 func (suite *IntegrationTestSuite) TestLogin() {

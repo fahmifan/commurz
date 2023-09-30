@@ -2,7 +2,6 @@
 package order_inventory
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -14,13 +13,30 @@ import (
 	"github.com/samber/lo"
 )
 
+type Error struct {
+	msg string
+}
+
+func NewError(msg string) Error {
+	return Error{msg: msg}
+}
+
+func (err Error) Error() string {
+	return err.msg
+}
+
+func IsDomainErr(err error) bool {
+	_, ok := err.(Error)
+	return ok
+}
+
 var (
-	ErrNotFound          = errors.New("not found")
-	ErrCartIsFull        = errors.New("cart is full")
-	ErrInvalidQuantity   = errors.New("invalid quantity")
-	ErrOutOfStock        = errors.New("out of stock")
-	ErrInsufficientStock = errors.New("insufficient stock")
-	ErrTooManyItems      = errors.New("too many items")
+	ErrNotFound          = NewError("not found")
+	ErrCartIsFull        = NewError("cart is full")
+	ErrInvalidQuantity   = NewError("invalid quantity")
+	ErrOutOfStock        = NewError("out of stock")
+	ErrInsufficientStock = NewError("insufficient stock")
+	ErrTooManyItems      = NewError("too many items")
 )
 
 type Cart struct {

@@ -22,12 +22,12 @@ type CartReader struct{}
 // FindCartByUserID will find cart by user id and preload the cart items.
 //
 // The lockProductStock is used for locking the row for update,
-// when set to true, it will lock the product stock using the product_stock_lock table.
+// when set to true, it will lock the product stock using the product table.
 //
 // The locking mechanism is not the nicest solution, but should work for now.
 // copy paste the FindCartByUserID function will makes too much duplication of
 // cartItems and all the preload logic down the functions.
-func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID, lockProductStock bool) (Cart, error) {
+func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, userID uuid.UUID, lockProduct bool) (Cart, error) {
 	queries := sqlcs.New(tx)
 
 	xcart, err := queries.FindCartByUserID(ctx, userID)
@@ -37,7 +37,7 @@ func (repo CartReader) FindCartByUserID(ctx context.Context, tx sqlcs.DBTX, user
 
 	cart := cartFromSqlc(xcart)
 
-	cartItems, err := repo.FindCartItemsByIDs(ctx, tx, []ulids.ULID{cart.ID}, lockProductStock)
+	cartItems, err := repo.FindCartItemsByIDs(ctx, tx, []ulids.ULID{cart.ID}, lockProduct)
 	if err != nil {
 		return Cart{}, fmt.Errorf("[FindCartByUserID] FindCartItemsByIDs: %w", err)
 	}
@@ -70,8 +70,8 @@ func (CartReader) FindCartItemsByIDs(ctx context.Context, tx sqlcs.DBTX, cartIDs
 		SetItem:   func(item *CartItem, target Product) { item.Product = target },
 		FetchItems: func() ([]Product, error) {
 			if lockProductStock {
-				if err := (ProductStockLocker{}).LockProductStocks(ctx, tx, productIDs); err != nil {
-					return nil, fmt.Errorf("[FindCartItemsByIDs] LockProductStocks: %w", err)
+				if _, err := query.FindAllProductsByIDsFroUpdate(ctx, parseutil.StringULIDs(productIDs)); err != nil {
+					return nil, fmt.Errorf("[FindCartItemsByIDs] FindAllProductsByIDsFroUpdate: %w", err)
 				}
 			}
 			return productRader.FindProductsByIDs(ctx, tx, productIDs)

@@ -114,6 +114,23 @@ func (q *Queries) CreateProductStockLock(ctx context.Context, productID string) 
 	return i, err
 }
 
+const findAllProductByIDFroUpdate = `-- name: FindAllProductByIDFroUpdate :one
+SELECT id, name, price, version, latest_stock FROM products WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) FindAllProductByIDFroUpdate(ctx context.Context, productID string) (Product, error) {
+	row := q.db.QueryRowContext(ctx, findAllProductByIDFroUpdate, productID)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Price,
+		&i.Version,
+		&i.LatestStock,
+	)
+	return i, err
+}
+
 const findAllProductListing = `-- name: FindAllProductListing :many
 SELECT id, name, price, version, latest_stock FROM products
 WHERE 
@@ -203,6 +220,39 @@ SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::T
 
 func (q *Queries) FindAllProductsByIDs(ctx context.Context, productIds []string) ([]Product, error) {
 	rows, err := q.db.QueryContext(ctx, findAllProductsByIDs, pq.Array(productIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Price,
+			&i.Version,
+			&i.LatestStock,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findAllProductsByIDsFroUpdate = `-- name: FindAllProductsByIDsFroUpdate :many
+SELECT id, name, price, version, latest_stock FROM products WHERE id = ANY($1::TEXT[]) FOR UPDATE
+`
+
+func (q *Queries) FindAllProductsByIDsFroUpdate(ctx context.Context, productIds []string) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, findAllProductsByIDsFroUpdate, pq.Array(productIds))
 	if err != nil {
 		return nil, err
 	}
